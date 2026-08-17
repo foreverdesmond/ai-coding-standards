@@ -1,5 +1,47 @@
 # 项目功能开发与多 Agent 协作规范
 
+<div align="center">
+
+  **Multi-Agent Development & Collaboration Standards (V2.3) | 多 Agent 开发与协作规范 (V2.3)**
+
+  A collection of guidelines, standards, and best practices for AI-assisted (vibe-coded) software development and multi-agent collaboration
+
+  面向 AI 辅助（vibe coding）开发与多 Agent 协作的规范、标准与最佳实践集合
+
+  [![X (Twitter)](https://img.shields.io/badge/X-@Richyisaflower-black?logo=x)](https://x.com/Richyisaflower)
+  [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
+</div>
+
+<p align="center">
+  <a href="#简体中文">简体中文</a> · <a href="#english">English</a>
+</p>
+
+---
+
+## English
+
+### Overview
+
+This repository defines a development and multi-agent collaboration standard for AI-assisted software projects. It turns loosely defined goals into auditable, implementable, verifiable, mergeable, and traceable software changes. The standard covers requirements, design, development tasks, independent review, layered verification (Level 0–3), and merge gates, and is not tied to any specific business, language, framework, or model.
+
+### Contents
+
+- Purpose & risk routes (lightweight / standard / high-risk)
+- Core principles (facts-first, boundary-setting, independence of review, layered verification, safety-first)
+- Standards directory & single responsibility (docs 01–08)
+- Common roles, stage map, default branch role mapping
+- Verification levels & status semantics
+- Codex & multi-agent collaboration rules
+- Evolutionary notes & V2.3 approved decisions
+
+Full Chinese specification: continue reading below (简体中文).
+
+---
+
+## 简体中文
+
+# 项目功能开发与多 Agent 协作规范
+
 > 规范版本：V2.3  
 > 规范状态：已审核通过  
 > 适用范围：新功能、旧功能升级、缺陷修复、技术迁移、数据迁移、架构重构及其他软件开发任务  

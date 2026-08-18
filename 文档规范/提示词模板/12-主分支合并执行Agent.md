@@ -19,7 +19,14 @@
 输出：
 
 ```text
+ProtocolVersion:
+EventType: MainMergeResult
+IterationID:
+TaskID:
+InvocationID:
+ExecutionStatus: Completed / Blocked
 Status: Merged / MergeExecutionBlocked
+BlockerType: None / RepositoryEnvironment / ToolRuntime / Conflict / Authorization
 SourceBranch:
 TargetMainBranch:
 ApprovedCandidate:

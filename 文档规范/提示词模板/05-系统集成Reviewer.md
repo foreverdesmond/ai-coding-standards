@@ -19,7 +19,14 @@
 输出：
 
 ```text
-Verdict: ComponentVerified / ChangesRequested
+ProtocolVersion:
+EventType: SystemReviewResult
+IterationID:
+TaskID:
+InvocationID:
+ExecutionStatus: Completed / Blocked
+Verdict: ComponentVerified / ChangesRequested / NotIssued
+BlockerType: None / RepositoryEnvironment / ToolRuntime / Authorization
 CandidateCommit:
 TaskIntegrationCheck:
 CrossTaskCallPaths:
@@ -32,3 +39,5 @@ Findings:
 Level2And3NotRun:
 IntegrationBranchRecommendation:
 ```
+
+执行阻塞时不得伪造系统 Verdict；应把 `Verdict` 写为 `NotIssued`。测试 `NotRun` 不自动等于系统 Review 阻塞。

@@ -2,7 +2,7 @@
 
 <div align="center">
 
-  **Multi-Agent Development & Collaboration Standards (V2.3) | 多 Agent 开发与协作规范 (V2.3)**
+  **Multi-Agent Development & Collaboration Standards (V2.4) | 多 Agent 开发与协作规范 (V2.4)**
 
   A collection of guidelines, standards, and best practices for AI-assisted (vibe-coded) software development and multi-agent collaboration
 
@@ -32,7 +32,7 @@ This repository defines a development and multi-agent collaboration standard for
 - Common roles, stage map, default branch role mapping
 - Verification levels & status semantics
 - Codex & multi-agent collaboration rules
-- Evolutionary notes & V2.3 approved decisions
+- Evolutionary notes & V2.3 approved decisions, V2.4 pending decisions
 
 Full Chinese specification: continue reading below (简体中文).
 
@@ -42,11 +42,11 @@ Full Chinese specification: continue reading below (简体中文).
 
 # 项目功能开发与多 Agent 协作规范
 
-> 规范版本：V2.3  
-> 规范状态：已审核通过  
-> 适用范围：新功能、旧功能升级、缺陷修复、技术迁移、数据迁移、架构重构及其他软件开发任务  
-> 使用对象：项目负责人、分析与设计人员、总调度、开发者、子 Agent、代码审查者、测试与运维人员  
-> 原定稿日期：2026-08-11  
+> 规范版本：V2.4
+> 规范状态：待审核（V2.3 仍为上一已审核基线）
+> 适用范围：新功能、旧功能升级、缺陷修复、技术迁移、数据迁移、架构重构及其他软件开发任务
+> 使用对象：项目负责人、分析与设计人员、总调度、开发者、子 Agent、代码审查者、测试与运维人员
+> 原定稿日期：2026-08-11
 > 修订日期：2026-08-15
 
 ## 1. 目的
@@ -63,6 +63,7 @@ Full Chinese specification: continue reading below (简体中文).
   → 详细设计
   → 详细开发任务
   → 开发上下文包生成与校验
+  → 调度控制平面初始化与 Canary
   → 独立任务分支开发、提交与独立 Review（Level 0）
   → 独立迭代集成任务合并已审核提交
   → 迭代整体集成验证与系统 Review（Level 1）
@@ -157,11 +158,20 @@ Full Chinese specification: continue reading below (简体中文).
 - 已审核提交只能由独立迭代集成任务合并到迭代开发分支；合并后还必须形成 `Integrated` 和 `IntegrationVerified` 证据。
 - 最终合并审核者只判断资格；只有独立主分支合并执行任务可以在候选、审核结论和项目负责人授权精确匹配时执行主分支合并。
 
-### 2.10 事件驱动调度，周期巡检兜底
+### 2.10 文档状态驱动调度，周期巡检消费
 
-- 调度者派发子任务后必须持续等待任务完成或求助事件；任务提前完成时立即处理，不等待下一次巡检周期。
-- 周期巡检只是无事件时的健康检查，用于发现停滞、冲突、上下文失效和真实阻塞，不能作为识别任务交付的唯一机制。
+- 项目声明的 `SharedRuntimeStatePath` 是唯一任务状态发现入口；子任务通过统一原子工具先写 `PendingConsumption`，再输出线程 final。详细开发任务文档只保存任务定义和最近一次持久快照。
+- 调度者和周期巡检只轮询共享 JSON 的 `StateRevision`。发现待消费记录后，才定向读取该记录绑定的线程内容，不得常态遍历全部任务或依赖跨任务 API 事件。
+- 周期巡检负责发现和消费文档状态变化，同时检查停滞、冲突、上下文失效和真实阻塞。
 - 单次编译失败、测试失败或未完成代码属于正常中间状态，不得在仍有活动时推断为 `Blocked` 或中断任务。
+
+### 2.11 调度状态必须持久、可恢复并可审计
+
+- 线程运行状态、开发任务状态和证据消费状态必须分别维护，不得用 UI 的 idle/completed 推断 Review 或任务结论。
+- Coordinator、巡检和子任务必须共享一个 `SharedRuntimeStatePath`；任务状态、待消费信号和消费确认统一通过 `StateUpdateToolPath` 在短时锁内原子写入。
+- 开发任务文档中的状态块是 Git 管理的持久快照，不是活动状态真源；共享状态缺失、损坏或版本回退时进入 `RecoveryOnly`，先从最后有效文档快照和 Git 恢复，必要时只定向读取已绑定线程。
+- 项目明确要求独立 Codex 子任务时，创建失败不得改用子 Agent、当前任务自做或其他执行机制替代。
+- 高风险迭代启动前必须通过调度协议 Canary，真实开发任务不得兼作控制平面测试。
 
 ## 3. 规范目录与单一职责
 
@@ -175,6 +185,7 @@ Full Chinese specification: continue reading below (简体中文).
 | [06-开发上下文包生成与使用规范](./文档规范/06-开发上下文包生成与使用规范.md) | 规定上下文包的生成、校验、探索、失效和对账 |
 | [07-子Agent任务委派与提示词规范](./文档规范/07-子Agent任务委派与提示词规范.md) | 规定角色契约、提示词结构、权限和输出状态 |
 | [08-开发验证、代码审查与合并门禁规范](./文档规范/08-开发验证、代码审查与合并门禁规范.md) | 规定 Level 0–3、Review 分工、分支门禁和合并资格 |
+| [09-调度控制平面与运行时台账规范](./文档规范/09-调度控制平面与运行时台账规范.md) | 规定开发任务文档状态面、定向消费、巡检、暂停、恢复和 Canary |
 
 角色提示词模板位于 [`提示词模板`](./文档规范/提示词模板/README.md)。模板是委派起点，不得替代任务实际基线和自主探索。
 
@@ -185,7 +196,7 @@ Full Chinese specification: continue reading below (简体中文).
 | 角色 | 核心职责 | 不得承担的职责 |
 |---|---|---|
 | 项目负责人 | 批准业务决定、风险例外、外部操作、合并和发布 | 不因口头同意自动替代正式证据 |
-| 总调度 | 维护任务状态、依赖、Agent 唯一性、证据和派发闭环 | 不以调度身份自行批准代码 |
+| 总调度 | 维护任务、线程和证据状态，执行幂等派发、事件消费、暂停与恢复 | 不以调度身份自行批准代码；不绕过控制平面或替换指定执行机制 |
 | 开发者 | 自主探索、实现、测试、提交证据 | 不批准自己的任务或改变需求 |
 | Coding Reviewer | 独立审查单任务 diff、设计一致性、反例和测试 | 不依赖开发者自述作结论 |
 | 返工执行者 | 精确关闭审查项并补回归测试 | 不把返工变成未经批准的重构 |
@@ -205,7 +216,8 @@ Full Chinese specification: continue reading below (简体中文).
 | 需求 | 范围、口径、Level 0–3 和 NotRun 可验收 | `02` |
 | 设计 | 需求落点、运行时所有权、失败语义、SOLID 和测试策略明确 | `03` |
 | 任务 | 路线、任务边界、系统集成责任和 Context 策略可执行 | `04` |
-| Context/委派 | 适用的 Context L2 与角色提示词有效 | `06`、`07` |
+| Context/委派 | 适用的 Context L2、角色提示词和不可变基线有效 | `06`、`07` |
+| 调度控制面 | 文档状态生产/消费、锁、租约、恢复和 Canary 可执行 | `09` |
 | Level 0–3 | 对应验证状态和证据满足项目门禁 | `08` |
 | 变更/合并 | 冻结候选、批准和证据仍然有效 | `05`、`08` |
 
@@ -262,7 +274,14 @@ Full Chinese specification: continue reading below (简体中文).
 - `MergeBlocked`、`MergeApproved`、`Merged`；
 - `ReleaseReady`。
 
-状态必须绑定证据，不得只根据聊天消息、UI 标签或 Agent 是否停止来推断。
+状态必须绑定证据，并写入开发任务文档的状态交换区；不得只根据聊天消息、UI 标签或 Agent 是否停止来推断。
+
+### 8.3 线程与证据状态
+
+- 执行载体状态使用：`NotCreated`、`Provisioning`、`Running`、`Idle`、`NeedsAttention`、`Completed`、`Unavailable`、`Cancelled`；
+- 证据状态使用：`Unread`、`Received`、`PendingVerification`、`Validated`、`Rejected`、`Superseded`、`Consumed`；
+- `Idle`/`Completed` 不等于没有 final，`Received` 不等于已经验证，代码存在不等于流程门禁通过；
+- 详细语义和转换规则以 `09` 为准。
 
 ## 9. 文件组织
 
@@ -287,15 +306,18 @@ Full Chinese specification: continue reading below (简体中文).
 2. 任务委派使用 `07` 的角色契约和对应模板。
 3. 上下文包必须按 `06` 生成，并显式暴露未知项和自主探索要求。
 4. 一个任务同一阶段只能有一个有效开发实例，除非明确拆分为互不冲突的子任务。
-5. 真实编码任务必须在独立任务分支提交；Reviewer 必须审查准确的 `BaseSHA..HeadSHA`，不能只审查开发者报告、worktree 或当前主工作区。
+5. 真实编码任务必须在独立任务分支提交；Reviewer 必须审查准确的 `CodeBaseSHA..HeadSHA`，不能只审查开发者报告、worktree 或当前主工作区。
 6. Review 失败后返回原任务返工，再由原 Reviewer 或批准的替代 Reviewer 复核。
 7. `TaskAccepted` 后由独立迭代集成任务合并准确的已审核提交；需要使用上游实现的下游任务默认依赖 `Integrated`。
-8. 派发后使用完成/求助事件驱动后续动作；巡检只在周期超时时检查健康状态，不重复派发已完成、正在运行或已批准任务。
-9. 任务仍有活动时，不得因中间编译或测试失败推断阻塞并中断。
-10. Review 必须使用独立任务和独立执行实例，不得发回开发任务要求其自审。
-11. 未运行测试必须如实记录，不能以推断或其他测试替代。
-12. 未经授权不得连接、修改或删除真实外部资源。
-13. 文档、任务、代码、验证、合并和发布状态分别维护。
+8. 派发前初始化 `09` 规定的共享本地 JSON、统一原子更新工具、Invocation、幂等键、不可变文档基线和协调租约；高风险迭代先通过 Canary，除非项目负责人对既有迭代明确记录临时豁免。
+9. 派发后由子任务通过统一工具把完成/求助状态写入共享 JSON；巡检消费 `PendingConsumption`，只对命中的记录定向读取线程，不重复派发。
+10. 任务创建返回临时请求标识时登记 `Provisioning` 并继续绑定正式任务，不得判定为失败；指定 Codex 子任务时不得用子 Agent 替代。
+11. 共享 JSON 缺失、损坏或版本回退时进入 `RecoveryOnly`，从开发任务文档最后有效快照和 Git 恢复；仅对明确缺失证据的记录定向读取任务历史。
+12. 任务仍有活动时，不得因中间编译或测试失败推断阻塞并中断。
+13. Review 必须使用独立任务和独立执行实例，不得发回开发任务要求其自审。
+14. 未运行测试必须如实记录，不能以推断或其他测试替代。
+15. 未经授权不得连接、修改或删除真实外部资源。
+16. 文档、线程、任务、证据、代码、验证、合并和发布状态分别维护。
 
 ## 11. 规范自身的演进
 
@@ -318,5 +340,14 @@ Full Chinese specification: continue reading below (简体中文).
 - [x] DOC-DEC-010：SOLID 保持所有路线的硬门禁，证据展开程度可以随风险调整。
 - [x] DOC-DEC-011：真实编码任务默认使用独立任务分支和不可变提交作为 Review 候选；普通开发者只可向自己的任务分支提交。
 - [x] DOC-DEC-012：迭代集成与主分支合并分别由独立执行任务完成，Reviewer 只审核资格，不执行合并。
-- [x] DOC-DEC-013：任务完成采用事件驱动处理，周期巡检只作为健康检查兜底。
+- [x] DOC-DEC-013：任务完成采用开发任务文档状态驱动；周期巡检消费文档信号并按需定向取证。
 
+## 13. V2.4 待审核决定
+
+- [ ] DOC-DEC-014：新增 `09` 作为控制协议；项目共享本地 JSON 作为任务运行状态唯一实时真源，开发任务文档保存 Git 管理的持久快照。
+- [ ] DOC-DEC-015：线程状态、任务状态和证据状态分离；UI 标签和 Git HEAD 不得替代事件结论。
+- [ ] DOC-DEC-016：高风险调度必须使用共享本地 JSON、短时锁、版本复查、原子更新工具、状态指纹、幂等派发键和协调租约。
+- [ ] DOC-DEC-017：明确要求 Codex 子任务时，创建失败不得以子 Agent 或当前任务自行执行兜底。
+- [ ] DOC-DEC-018：Review 的执行状态与代码 Verdict 分离，`NotRun` 不自动等于 Review 阻塞。
+- [ ] DOC-DEC-019：共享状态缺失时进入 `RecoveryOnly`，从开发任务文档最后有效快照和 Git 重建，必要时只定向读取相关子任务。
+- [ ] DOC-DEC-020：高风险真实任务启动前必须通过包含状态区恢复、重复状态和跨 worktree 统一写入的调度 Canary。

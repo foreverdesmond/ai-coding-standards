@@ -19,7 +19,15 @@
 |---|---|---|---|---|
 
 ```text
+ProtocolVersion:
+EventType: ReworkSubmission
+IterationID:
+TaskID:
+InvocationID:
+ReviewedTaskInvocationID:
+ExecutionStatus: Completed / Blocked
 Status: Submitted / Blocked
+BlockerType: None / NeedsScopeChange / Environment / Authorization
 FindingDisposition: Closed / DisputedWithEvidence / NeedsScopeChange
 PreviousReviewedTarget:
 TaskBranch:
@@ -28,4 +36,9 @@ NewHeadSHA:
 NewReviewRange:
 AffectedEvidence:
 AdditionalRisks:
+StateRecordID:
+PublishedSignalRevision:
+StatePublishStatus: Published / StatePublishFailed
 ```
+
+`ExecutionStatus: Blocked` 时 `Status` 必须为 `Blocked`；新提交必须返回新的 `NewHeadSHA`，不得复用旧 Review 结论。输出 final 前必须先发布对应返工状态记录。

@@ -17,7 +17,14 @@
 输出：
 
 ```text
-Verdict: MergeApproved / MergeBlocked
+ProtocolVersion:
+EventType: FinalMergeReviewResult
+IterationID:
+TaskID:
+InvocationID:
+ExecutionStatus: Completed / Blocked
+Verdict: MergeApproved / MergeBlocked / NotIssued
+BlockerType: None / RepositoryEnvironment / ToolRuntime / Authorization
 SourceBranch:
 TargetBranch:
 CandidateCommit:
@@ -28,3 +35,5 @@ WorkspaceAndBranchCheck:
 Blockers:
 RequiredAuthorization:
 ```
+
+执行阻塞时 `Verdict: NotIssued`；不得把工具故障写成候选不合格。

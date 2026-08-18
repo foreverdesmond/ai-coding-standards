@@ -6,7 +6,7 @@
 
 1. 检查工作区、分支和基线提交。
    - 当前分支必须是 `<task-branch>`；
-   - 当前基线必须是 `<base-sha>`；
+   - 当前基线必须是 `<code-base-sha>`；
    - 若不一致，停止并报告，不在迭代分支或主分支继续开发。
 2. 搜索目标接口、实现、消费者、生产入口、注册和配置。
 3. 检查间接解析、生命周期、并发和资源所有权。
@@ -27,14 +27,20 @@
 输出：
 
 ```text
+ProtocolVersion:
+EventType: DevelopmentSubmission
+IterationID:
+TaskID:
+InvocationID:
+ExecutionStatus: Completed / Blocked
 Status: Submitted / Blocked
 BlockerType: None / NeedsScopeChange / Environment / Authorization
 ContextCheck:
 SourceCommit:
 TaskBranch:
-BaseSHA:
+CodeBaseSHA:
 HeadSHA:
-ReviewRange: <BaseSHA..HeadSHA>
+ReviewRange: <CodeBaseSHA..HeadSHA>
 ReviewedCommitSet: <commits in ReviewRange>
 ChangedFiles:
 BehaviorImplemented:
@@ -43,6 +49,9 @@ NotRun:
 RemainingRisks:
 ContextOrDesignUpdatesNeeded:
 SOLIDAssessment:
+StateRecordID:
+PublishedSignalRevision:
+StatePublishStatus: Published / StatePublishFailed
 ```
 
-没有 `HeadSHA` 的真实编码任务不得报告 `Submitted`。
+`ExecutionStatus: Blocked` 时 `Status` 必须为 `Blocked`。没有 `HeadSHA` 的真实编码任务不得报告 `Submitted`。输出 final 前必须先通过 `StateUpdateToolPath` 把同一结果写入 `SharedRuntimeStatePath` 的 `StateRecordID` 并发布 `PendingConsumption`。

@@ -15,7 +15,14 @@
 输出：
 
 ```text
-Verdict: ReadyForOwnerApproval / ChangesRequested
+ProtocolVersion:
+EventType: RequirementsReviewResult
+IterationID:
+TaskID:
+InvocationID:
+ExecutionStatus: Completed / Blocked
+Verdict: ReadyForOwnerApproval / ChangesRequested / NotIssued
+BlockerType: None / RepositoryEnvironment / ToolRuntime / Authorization
 DocumentAndVersion:
 BackgroundConsistency:
 ScopeAndTerminology:
@@ -25,4 +32,3 @@ ImplementationLeakage:
 Findings:
 OwnerDecisionsStillRequired:
 ```
-

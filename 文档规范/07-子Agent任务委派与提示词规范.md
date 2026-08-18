@@ -1,13 +1,13 @@
-# 子 Agent 任务委派与提示词规范
+# 子任务与 Agent 委派及提示词规范
 
-> 规范版本：V2.3  
-> 规范状态：已审核通过  
-> 适用范围：使用 Agent 执行开发、Review、测试、调度或合并审核  
+> 规范版本：V2.4
+> 规范状态：待审核（V2.3 仍为上一已审核基线）
+> 适用范围：使用 Agent 执行开发、Review、测试、调度或合并审核
 > 修订日期：2026-08-15
 
 ## 1. 单一职责
 
-本文只规定如何选择角色、组装提示词以及保持角色独立。各角色的详细执行契约以 [`提示词模板`](./提示词模板/README.md) 为唯一真源，不在正文重复。
+本文只规定如何选择执行机制和角色、组装提示词以及保持角色独立。各角色的详细执行契约以 [`提示词模板`](./提示词模板/README.md) 为唯一真源，不在正文重复；任务身份、事件、台账、巡检和恢复以 [`09-调度控制平面与运行时台账规范`](./09-调度控制平面与运行时台账规范.md) 为唯一真源。
 
 规范定义能力，不绑定模型、供应商或版本。具体执行实例由项目配置。
 
@@ -31,6 +31,23 @@
 
 模板数量不代表每个迭代必须启动同样数量的 Agent。轻量任务通常只需 Implementer 和独立 Reviewer。
 
+### 2.1 执行机制必须显式配置
+
+角色和执行机制是两个不同概念。项目必须为每次派发记录：
+
+```text
+ExpectedExecutionKind: CodexThread / SubAgent / Human / ApprovedEquivalent
+ExpectedModel
+Role
+InvocationID
+```
+
+- 项目负责人要求“创建独立 Codex 子任务/子线程”时，只能使用任务系统的创建机制；
+- 创建返回临时请求标识表示 `Provisioning`，不是失败；
+- 创建失败或任务系统不可用时登记 `ControlPlaneError` 并停止，不得改用 `spawn_agent`、当前任务自行实现或其他机制替代；
+- 只有项目负责人事先批准 `ApprovedEquivalent` 时才允许等价执行机制；
+- 角色独立性不能仅靠不同名称证明，必须有不同 `InvocationID` 和执行实例。
+
 ## 3. 提示词分层
 
 不再要求所有角色共享一份开发任务基座。按角色使用：
@@ -39,7 +56,9 @@
 
 只包含：
 
+- 协议版本、IterationID、TaskID、InvocationID、父调度身份和执行机制；
 - 仓库、工作区和审核目标；
+- `CodeBaseSHA` 与适用的需求、设计、任务、Context 不可变基线；
 - 用户已有改动保护；
 - 外部与破坏性操作授权；
 - 证据真实性和 `NotRun`；
@@ -51,7 +70,8 @@
 - Context L2（仅适用时）；
 - 修改职责、必须调查范围和完成证据；
 - 自主探索和 SOLID 硬门禁。
-- 唯一任务分支、worktree、`BaseSHA`、允许 commit 的范围和禁止合并的目标分支。
+- 唯一任务分支、worktree、`CodeBaseSHA`、允许 commit 的范围和禁止合并的目标分支。
+- 结构化 `DevelopmentSubmission` 事件头和必须返回的 Invocation 身份。
 
 ### 3.3 Review 角色增量
 
@@ -60,7 +80,8 @@
 - Reviewer 先独立形成风险模型，再读取开发上下文包；
 - SOLID、测试证明边界和独立风险假设；
 - 不允许直接修改代码或更新最终任务状态，除非明确授权角色变化。
-- `TaskBranch`、`BaseSHA`、`HeadSHA` 与准确 `BaseSHA..HeadSHA`；Review 不得改审当前主工作区或其他分支。
+- `TaskBranch`、`CodeBaseSHA`、`HeadSHA` 与准确 `CodeBaseSHA..HeadSHA`；Review 不得改审当前主工作区或其他分支。
+- `ExecutionStatus` 与 `Verdict` 分离的结构化 `CodingReviewResult` 事件头。
 
 ### 3.4 候选版本角色增量
 
@@ -81,7 +102,7 @@
   + 一个角色模板
   + 该角色需要的正式基线
   + 可选 Context L2
-  + 本轮动态数据（diff、Findings、测试或候选证据）
+  + 本轮动态数据（Invocation、diff、Findings、测试或候选证据）
 ```
 
 不得只发送“按文档完成任务”，也不得无差别灌入整个文档目录。
@@ -93,6 +114,7 @@
 - 同一模型可以承担不同任务，但不能在同一任务中把自己的实现直接批准；
 - 高风险最终 Review 应使用项目当前可用的强独立推理能力；
 - 执行实例替换时记录恢复点和需要重新读取的材料。
+- 执行实例替换必须生成新 `InvocationID`，旧实例标记失效或取消；不得让两个实例同时成为同一阶段的有效真源。
 - Coding Review 必须创建独立任务或独立执行实例，不得把“请审核”发回原开发任务；
 - Merge Reviewer 只审核合并资格，Merge Executor 只执行已经批准的精确合并；审核和执行默认分离。
 
@@ -131,16 +153,25 @@ Reviewer 必须形成独立风险假设。
 - 开发完成进入独立 Review，失败回原任务返工；
 - Review 通过先形成 `TaskAccepted`；之后派发独立迭代集成任务，形成 `Integrated`，再执行受影响集成验证形成 `IntegrationVerified`；
 - 依赖满足才派发下游；需要上游实现的依赖默认等待 `Integrated`；
-- 派发后持续等待完成或求助事件，事件发生即处理；周期巡检只在等待超时时检查健康状态，不是完成检测的唯一入口；
+- 派发后持续检查 `SharedRuntimeStatePath` 的 `StateRevision`；子任务通过统一工具写入 `PendingConsumption` 后立即处理；
 - 巡检只处理状态变化，不重复发送同一指令；
-- 活动心跳和临时时间保存在调度工具中，不强制写入 Markdown；
+- 活动心跳和长日志可以保存在派生审计缓存中；任务状态、Invocation、线程绑定、待消费信号和消费确认必须写入共享本地 JSON；
+- 运行时状态必须按 `09` 通过 `StateUpdateToolPath` 写入唯一 `SharedRuntimeStatePath`；共享状态不可用时进入 `RecoveryOnly`；
+- 每次派发具有 `InvocationID`、`DispatchKey`、不可变代码/文档基线和因果事件；
+- 创建请求、正式任务、线程状态、任务状态和证据状态分别登记；
+- 所有状态信号按 `RecordID + SignalRevision` 至少一次读取并幂等消费；
+- 项目暂停时停止新副作用，恢复时先处理未消费事件；
 - 总调度不批准自己的实现。
 
 总调度至少维护以下运行时映射，不得仅凭 UI 标签推断：
 
 ```text
-TaskID, TaskType, TaskBranch, WorktreePath, BaseSHA, HeadSHA,
-ImplementerTask, ReviewerTask, State, LastEventCursor, LastEvidenceAt
+RecordID, TaskID, TaskType, InvocationID, ExpectedExecutionKind, ExpectedModel,
+CreationRequestID, ExecutionThreadID, TaskBranch, WorktreePath,
+CodeBaseSHA, RequirementsBaselineRef, DesignBaselineRef,
+TaskDocumentBaselineRef, HeadSHA, ImplementerTask, ReviewerTask,
+ThreadStatus, TaskState, EvidenceState, SignalRevision, SignalState,
+ProducedAt, ConsumedAt, LastEventFingerprint
 ```
 
 ### 8.1 派发前强制清单
@@ -149,27 +180,33 @@ ImplementerTask, ReviewerTask, State, LastEventCursor, LastEvidenceAt
 
 - TaskType、角色模板和允许输出状态；
 - 依赖类型及所需状态；
-- 任务分支、worktree、BaseSHA、MergeTarget 和候选形式；
+- 任务分支、worktree、CodeBaseSHA、MergeTarget 和候选形式；
+- InvocationID、执行机制、预期模型、父调度身份和幂等 DispatchKey；
+- 需求、设计、任务和 Context 的不可变基线；
 - 文件范围与其他活跃任务是否冲突；
 - Context L2 是否适用、存在且仍有效；
 - Git 权限、外部副作用权限和停止条件；
 - 预期测试范围、交付证据和后续 Reviewer；
 - 同一阶段是否已有有效实例，防止重复派发。
+- `SharedRuntimeStatePath`、`StateUpdateToolPath` 和短时锁可写、协调租约已取得、当前不处于 Paused/RecoveryOnly；
 
 任何必填项缺失或冲突未解决时不得派发。
 
-### 8.2 完成事件与周期巡检
+### 8.2 状态生产、消费与周期巡检
 
 标准调度循环：
 
 ```text
-派发并登记任务标识/等待游标
-→ 等待任一任务完成或请求协助
-  → 事件到达：立即校验交付并派发下一动作
-  → 周期超时：只做健康巡检，然后继续等待
+在共享状态登记 DispatchKey/Invocation/状态记录并创建任务
+→ 绑定创建请求标识和正式执行标识
+→ 轮询同一共享 JSON 的 StateRevision
+  → PendingConsumption：只读取记录绑定的线程，校验交付，再幂等派发下一动作
+  → 无新状态：不遍历线程，只做共享状态/文档/Git 健康巡检
 ```
 
-交付校验至少包括：最终状态、`HeadSHA`、预期文件、测试证据、范围外改动和后续 Review/集成动作。任务在第一分钟完成时必须立即处理，不等待第七分钟或其他配置周期。
+交付校验至少包括：协议版本、Invocation、最终状态、`HeadSHA`、预期文件、测试证据、范围外改动和后续 Review/集成动作。任务在第一分钟完成时必须立即处理，不等待第七分钟或其他配置周期。
+
+UI 显示 idle/completed、Git HEAD 未变化或读取接口暂时无结果，都不能单独证明“没有 Review/完成状态”。任务状态发现只以开发任务文档为准；用户提供的完整子任务结果应写入对应记录的 `PendingVerification` 并立即核验，不得被旧状态覆盖。
 
 ### 8.3 中断与阻塞判断
 
@@ -182,21 +219,25 @@ ImplementerTask, ReviewerTask, State, LastEventCursor, LastEvidenceAt
 - 第一轮 `ChangesRequested` 正常返工；
 - 第二轮出现同类 Finding 时，Coordinator 必须比较两轮结论并分类根因；
 - 第三次仍出现同类问题时停止机械派发，判断实现能力不匹配、需求/设计歧义、候选绑定错误或证据规则错误，并向项目负责人报告需要的裁决；
-- 代码 `HeadSHA` 未变化且仅更新台账/证据时，不重新执行完整 Coding Review 或全量测试。
+- 代码 `HeadSHA` 未变化且仅更新状态区/证据时，不重新执行完整 Coding Review 或全量测试。
 
 ## 9. 提示词质量门禁
 
 - [ ] 角色和允许输出状态明确；
+- [ ] 协议版本、IterationID、TaskID、InvocationID、父调度身份和执行机制明确；
 - [ ] 审核目标不可歧义；
 - [ ] 只提供该角色真正需要的基线；
 - [ ] Context L2 只在触发时提供；
 - [ ] 修改权限和只读调查分开；
-- [ ] 任务分支、BaseSHA、HeadSHA、ReviewedCommitRange/ReviewedCommitSet 和合并目标明确；
+- [ ] 任务分支、CodeBaseSHA、HeadSHA、ReviewedCommitRange/ReviewedCommitSet 和合并目标明确；
+- [ ] 代码、需求、设计、任务和 Context 基线不可歧义；
 - [ ] SOLID、测试、证据和 NotRun 责任明确；
 - [ ] 外部操作边界明确；
 - [ ] Review 视角未被开发上下文提前限制；
 - [ ] 停止条件明确；
-- [ ] 已通过派发前清单，并配置完成事件等待与周期巡检兜底；
+- [ ] 已通过派发前清单，并配置文档状态生产/消费与周期巡检；
+- [ ] 已配置唯一状态区、幂等 DispatchKey、协调租约、暂停、恢复和适用 Canary；
+- [ ] 指定 Codex 子任务时没有未经授权的执行机制兜底；
 - [ ] 未绑定不必要的具体模型、业务或工具。
 
 ## 10. 模板维护

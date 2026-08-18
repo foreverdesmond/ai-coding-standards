@@ -8,7 +8,7 @@
 - 任务状态为 `TaskAccepted`/`MergePending`；
 - 来源、目标、工作区和允许 Git 动作明确；
 - 没有未解决的文件冲突或未审核替代提交。
-- `BaseSHA` 是 `HeadSHA` 的祖先，且实际纳入的提交集合与 `ReviewedCommitSet` 一致；
+- `CodeBaseSHA` 是 `HeadSHA` 的祖先，且实际纳入的提交集合与 `ReviewedCommitSet` 一致；
 
 规则：
 
@@ -21,7 +21,15 @@
 输出：
 
 ```text
+ProtocolVersion:
+EventType: IterationIntegrationResult
+IterationID:
+TaskID:
+InvocationID:
+ReviewedTaskInvocationID:
+ExecutionStatus: Completed / Blocked
 Status: Integrated / IntegrationFailed / BlockedByConflict
+BlockerType: None / RepositoryEnvironment / ToolRuntime / Conflict / Authorization
 TaskID:
 SourceBranch:
 ApprovedHeadSHA:

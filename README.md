@@ -251,7 +251,7 @@ Full Chinese specification: continue reading below (简体中文).
 | Doc/Design Reviewer   |                  禁止 |                   禁止 |                            禁止 |
 | Coordinator（Hermes） |                  禁止 |                   禁止 |                            禁止 |
 
-说明：Coordinator（Hermes）不代执行任何 git 操作，只派发与判 gate。需要提交权限的角色（Implementer / Integrator）使用 `danger-full-access` 沙箱；Reviewer / Validator / Doc/Design Reviewer 为只读沙箱。worktree 由 Implementer 自建、Integrator 统一清理。
+说明：Coordinator（Hermes）不代执行任何 git 操作，只派发与判 gate。需要提交权限的角色（Implementer / Integrator / Doc/Design Reviewer）使用 `danger-full-access` 沙箱；Reviewer / Validator 为只读沙箱。Doc/Design Reviewer 需维护并提交设计/工作包/上下文文档，故同样授予提交权限。worktree 由 Implementer 自建、Integrator 统一清理。
 
 ## 7. 验证等级概览
 
@@ -324,7 +324,7 @@ Full Chinese specification: continue reading below (简体中文).
 14. 未运行测试必须如实记录，不能以推断或其他测试替代。
 15. 未经授权不得连接、修改或删除真实外部资源。
 16. 文档、执行载体、任务、证据、代码、验证、合并和发布状态分别维护。
-17. 需要提交权限的角色（Implementer / Integrator）使用 `danger-full-access` 沙箱；Hermes 单实例运行，以 DispatchKey 幂等去重替代协调租约锁。
+17. 需要提交权限的角色（Implementer / Integrator / Doc/Design Reviewer，后者需提交设计/工作包/上下文文档）使用 `danger-full-access` 沙箱；Reviewer / Validator 只读；Hermes 单实例运行，以 DispatchKey 幂等去重替代协调租约锁。
 
 ## 11. 规范自身的演进
 
@@ -333,7 +333,9 @@ Full Chinese specification: continue reading below (简体中文).
 - 规范变更同样需要审核；本目录状态为“待审核”时，不得宣称新版本已经成为正式基线。
 - 提示词模板经过多次项目验证后，可以进一步封装为 Skill，但 Skill 不能取代仓库内已审核规范。
 
-## 12. V2.3 已审核决定
+## 12. 历史已审核决定（V2.3 / V2.4）
+
+> 本节为历史审核记录，仅说明 V2.3 / V2.4 曾批准的决定；V2.5 的新版本决定见 §13，被取代的历史决定对新版本不再具有效力。
 
 - [x] DOC-DEC-001：采用 Level 0–3 验证等级及对应状态语义。
 - [x] DOC-DEC-002：Level 0–3 是通用状态门禁；迭代、集成和稳定分支映射作为推荐默认策略，由项目配置覆盖。
@@ -374,3 +376,4 @@ Full Chinese specification: continue reading below (简体中文).
 | V2.4 | 2026-08-15 | —         | 引入共享 JSON 状态交换区（Codex 线程调度）、角色 10 种、Codex 协作规则                                                                                                                                         |
 | V2.5 | 2026-08-20 | WorkBuddy | 标题/版本升 V2.5（Hermes 总调度基线）；§2.10/§2.11 去共享 JSON；§3 目录表 09 改名；§4 角色收敛 6 种；§6.1 Git 权限矩阵按 6 角色更新；§10 重写为 Hermes 协作规则；§13 改写为 V2.5 待审核决定（DOC-DEC-021~025） |
 | V2.5 | 2026-08-20 | Hermes | 审阅补充：ReleaseReady 定义为发布前最终状态；§2.5 明确 Reviewer 同角色按 Level 区分 |
+| V2.5 | 2026-08-20 | Hermes | 统一 Doc/Design Reviewer 提交权限为 danger-full-access；§12 标题改 V2.3/V2.4 历史已审核决定并注明 V2.5 取代 |

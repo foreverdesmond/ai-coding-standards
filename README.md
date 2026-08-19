@@ -128,7 +128,7 @@ Full Chinese specification: continue reading below (简体中文).
 - 开发者负责实现和自证，不能批准自己的任务。
 - Coding Reviewer 必须以实际 diff 和精确提交为准，不以开发者总结为准。
 - Reviewer 不应只机械重跑开发者测试，必须主动寻找设计遗漏、反例和测试证明缺口。
-- 系统集成 Review 与单任务 Coding Review 是不同职责，前者重点检查任务交界、生产入口、并发和资源所有权。
+- 系统集成 Review 与单任务 Coding Review 是不同职责，前者重点检查任务交界、生产入口、并发和资源所有权（Reviewer 同角色按 Level 区分，不设独立角色）。
 
 ### 2.6 验证分层且风险驱动
 
@@ -277,7 +277,7 @@ Full Chinese specification: continue reading below (简体中文).
 - `MergePending`、`Integrated`、`IntegrationVerified`；
 - `ComponentVerified`、`SystemVerified`、`ExternalVerified`；
 - `MergeBlocked`、`MergeApproved`、`Merged`；
-- `ReleaseReady`。
+- `ReleaseReady`：已合并到目标版本并在真实环境测试通过后、正式发布前的最终状态；此后再无与流程相关的工作。
 
 状态必须绑定证据，并写入开发任务文档的状态交换区；不得只根据聊天消息、UI 标签或 Agent 是否停止来推断。
 
@@ -365,3 +365,4 @@ Full Chinese specification: continue reading below (简体中文).
 | V2.3 | 2026-08-11 | — | V2.3 已审核通过基线 |
 | V2.4 | 2026-08-15 | — | 引入共享 JSON 状态交换区（Codex 线程调度）、角色 10 种、Codex 协作规则 |
 | V2.5 | 2026-08-20 | WorkBuddy | 标题/版本升 V2.5（Hermes 总调度基线）；§2.10/§2.11 去共享 JSON；§3 目录表 09 改名；§4 角色收敛 6 种；§6.1 Git 权限矩阵按 6 角色更新；§10 重写为 Hermes 协作规则；§13 改写为 V2.5 待审核决定（DOC-DEC-021~025） |
+| V2.5 | 2026-08-20 | Hermes | 审阅补充：ReleaseReady 定义为发布前最终状态；§2.5 明确 Reviewer 同角色按 Level 区分 |

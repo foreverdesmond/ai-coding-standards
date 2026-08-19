@@ -122,7 +122,7 @@ MergeTarget
 
 ### 5.1 唯一状态真源
 
-- **Hermes 台账**（`LedgerLocation`，本地 JSON 状态文件 + 可选 SQLite，**项目目录内、不进 Git**）是活动迭代中任务运行状态的**唯一实时真源**，由 Hermes 单实例维护。
+- **Hermes 台账**（`LedgerLocation`，本地 JSON 状态文件 + 可选 SQLite，**项目目录内、不进 Git**）是活动迭代中任务运行状态的**唯一实时真源**，由 Hermes 单实例维护。**台账绝不提交至 Git——即便执行载体有 ```danger-full-access``` 提交权限，任何 add/commit 也不得包含台账文件**（台账随开发变动会产生与提交的循环引用/自包含哈希，必须与版本库隔离）。
 - **开发任务文档**（`CanonicalTaskDocumentPath`）中的 `TASK-STATE-EXCHANGE` 块是 **Git 持久快照**，用于跨重启/灾难恢复。
 - 执行 Agent **不直接写台账**；通过载体通道回报结构化结果，由 Hermes 消费后写入台账（见 §8）。
 - 台账只存定位与验证所需的摘要、SHA、Verdict、`ExecutionRef` 与下一动作；长日志、完整 diff、完整 final 不写入台账，落入派生证据目录。
@@ -350,11 +350,11 @@ ControlPlaneErrors
 7. 对每项任务计算证据支持的最大安全状态；
 8. 对冲突、缺失、错误执行机制和未知合入形成清单；
 9. 写回台账并保存旧状态备份；在稳定门禁点把最新状态复制为开发任务文档持久快照；
-10. 输出恢复报告；经项目负责人或项目批准的独立审计形成 `RecoveryApproved` 后才能退出 `RecoveryOnly`。
+10. 输出恢复报告；冷恢复**自动校验通过即完成（无需项目负责人介入）**，校验通过即退出 `RecoveryOnly` 恢复调度。
 
 ### 13.2 最大安全状态
 
-- 仅发现任务分支 commit：`CodePresence=PresentInTaskBranch`、`TaskState=EvidenceIncomplete`；
+- 仅发现任务分支 commit：`CodePresence=PresentInTaskBranch`、`TaskState=InProgress`（已有状态）；
 - Implementer final 与 Git 均有效：最多恢复为 `Submitted`；
 - 有效 `ChangesRequested`：恢复为 `ChangesRequested`，并检查是否已有新 Head；
 - 有效 `Approved` 且目标等于当前 Head：可以恢复 `TaskState=TaskAccepted`，但 `RecoveryOnly` 仍禁止据此派发，必须先完成恢复审计；
@@ -417,3 +417,4 @@ Canary 未通过时，真实业务任务保持 `Planned/Ready`，不得用真实
 |---|---|---|---|
 | V2.5（待审核） | 2026-08-20 | WorkBuddy | 由 V2.4「09-调度控制平面与运行时台账规范」重命名+重写为 Hermes 常驻总调度模式（台账schema/三类状态/DispatchKey幂等/事件+cron双通道/单实例无租约/ExecutionRef/三级恢复/沙箱分级） |
 | V2.5（待审核） | 2026-08-20 | Hermes | 补齐作者/审核人/修订记录元信息 |
+| V2.5（待审核） | 2026-08-20 | Hermes | 审阅修订：台账绝不可提交至Git(防循环引用/自包含哈希)；冷恢复自动校验通过即完成无需Richy；EvidenceIncomplete改为已有状态InProgress |

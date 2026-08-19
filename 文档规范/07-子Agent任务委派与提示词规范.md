@@ -208,6 +208,8 @@ Hermes 在台账登记 DispatchKey/Invocation/状态记录并派发
 
 交付校验至少包括：协议版本、Invocation、最终状态、`HeadSHA`、预期文件、测试证据、范围外改动和后续 Review/集成动作。任务在第一分钟完成时必须立即处理，不等待第七分钟或其他配置周期。
 
+> **IntegrationVerified 执行主体**：`Integrated` 之后的 `IntegrationVerified` 由 **Integrator（或独立 `IntegrationValidationTask`）** 负责——其合并精确 commit 后运行/触发受影响集成检查，并通过载体通道回报结构化协议头（`IntegrationCommit` + `IntegrationStatus`），由 Hermes 消费写入台账后触发下游 Level 1。不依赖外部 CI webhook（详见 `09` §6.1 / `08` §3.4）。
+
 UI 显示 idle/completed、Git HEAD 未变化或读取接口暂时无结果，都不能单独证明“没有 Review/完成状态”。任务状态发现只以开发任务文档为准；用户提供的完整子任务结果应写入对应记录的 `PendingVerification` 并立即核验，不得被旧状态覆盖。
 
 ### 8.3 中断与阻塞判断
@@ -260,3 +262,4 @@ UI 显示 idle/completed、Git HEAD 未变化或读取接口暂时无结果，�
 | V2.4 | 2026-08-15 | — | 引入 CodexThread/SubAgent 执行机制与共享 JSON 轮询 |
 | V2.5 | 2026-08-20 | WorkBuddy | §2.1 枚举四档（WorkBuddy/Codex/Human/ApprovedEquivalent）；§4 动态数据 Hermes 注入；§5 载体分离≠视角独立；§8 共享 JSON→Hermes 台账 + 事件/cron；ExecutionThreadID→ExecutionRef |
 | V2.5 | 2026-08-20 | Hermes | 审阅修订：§2 角色列表收敛为 6 种核心角色，扩展角色并入映射说明 |
+| V2.5（待审核） | 2026-08-20 | Hermes | §8.2 同步 IntegrationVerified 执行主体 = Integrator（或独立 IntegrationValidationTask），不依赖外部 CI webhook（与 09 §6.1 / 08 §3.4 一致） |

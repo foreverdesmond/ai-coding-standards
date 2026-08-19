@@ -63,10 +63,12 @@ Codex 网关返回正式 `thread id` 时直接登记执行标识；只返回请�
 描述开发流程状态：
 
 ```text
-Planned → Ready → InProgress → Submitted → InReview
+Planned → ContextGenerationPending → Ready → InProgress → Submitted → InReview
   → ChangesRequested → ReworkInProgress → Submitted
   → TaskAccepted → MergePending → Integrated → IntegrationVerified
 ```
+
+`ContextGenerationPending` 仅在 `ContextL2Policy=Required` 时出现：Hermes 先派发 Doc/Design Reviewer 生成 Context L2（须在其依赖满足后），其完成信号写回台账后才将任务推进到 `Ready`，再派发 Implementer。
 
 `Blocked`、`Cancelled` 是有证据的旁路状态。候选版本继续使用 `ComponentVerified`、`SystemVerified`、`ExternalVerified`、`MergeApproved` 和 `Merged`。
 
@@ -157,10 +159,14 @@ LastEventFingerprint, BlockerType, RecoveryConfidence, NextAction
 |---|---|---|
 | 飞书长连接（lark-ws） | 收 WorkBuddy 回复消息 | 事件，可能丢（已实证） |
 | Codex 网关轮询 `GET /v1/threads/:id` | 查 Codex 线程进度 | 事件，主动轮询 |
+| CI / 集成验证回写 | Integrator 合并精确 commit 后，运行/触发受影响集成检查，通过其载体通道（飞书/Codex）回报结构化协议头（含 `IntegrationCommit` + `IntegrationStatus`），由 Hermes 消费写入台账 | 事件，由执行载体回报，不依赖外部 webhook |
+| 候选冻结（human-gated） | 项目负责人冻结迭代候选后告知 Hermes（或 Hermes 轮询到冻结标记），触发派发 Level 1（Validator / System Reviewer） | 事件，human-gated |
 | Hermes cron 定时轮询 | **兜底对账**（约 1 分钟） | 兜底，补事件丢漏 |
 | TG 推送 | 通知关键节点 | 输出，0 token |
 
-**结论**：事件（飞书 + Codex 轮询）优先消费，cron 定时对账兜底；事件丢失不影响正确性。
+**结论**：事件（飞书 + Codex 轮询 + CI 回写 + 候选冻结）优先消费，cron 定时对账兜底；事件丢失不影响正确性。
+
+> **IntegrationVerified 回写说明**：`Integrated` 之后的 `IntegrationVerified` 不再依赖外部 CI webhook。执行主体为 **Integrator**（或独立 `IntegrationValidationTask`）：其合并精确 commit 后，运行/触发受影响集成检查，并通过自身载体通道（飞书/Codex）回报结构化协议头（含 `IntegrationCommit` + `IntegrationStatus=Passed/Failed`）；Hermes 消费该信号后写入台账，触发下游 Level 1。回报缺失视为待消费信号，由 cron 停滞检测升级（见 §11）。
 
 ### 6.2 幂等身份
 
@@ -196,6 +202,7 @@ Hermes → 执行载体：
 - 所有执行载体统一建模为 `ExecutionRef`，替代旧 `clientThreadId → threadId` 两段式映射。
 - Codex 返回正式 thread id 时登记 `ExecutionRef = thread id`；只返回请求标识时登记 `Provisioning`，随后解析正式标识。
 - 派发创建调用失败时登记 `ControlPlaneError`，不得登记业务 `Blocked`，不得改用其他执行机制兜底（除非项目负责人批准 `ApprovedEquivalent`）。
+- **载体不可用升级阈值**：同一执行载体（按 `ExecutionRef` 识别）连续派发/读取失败达到 **3 次**仍不可用，Hermes 不得继续空转重试，须升级并告警项目负责人（Richy）；仅当 Richy 批准 `ApprovedEquivalent` 时才可换等效载体，否则保持 `Provisioning`/`NeedsAttention`/`PendingVerification` 并等待 Richy 介入。
 
 ### 7.3 沙箱分级与 git 授权
 
@@ -233,7 +240,7 @@ Hermes 读台账
 9. 仅 `Validated` 证据可以触发正常状态转换；
 10. Hermes 在台账中写入汇总状态、消费确认和后续阶段记录，最后递增 `StateRevision`。
 
-跨任务读取失败时保留 `PendingConsumption`，记录控制面错误并通知；下一轮仍只处理该待消费记录，不得退化为扫描所有执行载体，也不得把读取失败改写成业务 `Blocked`。
+跨任务读取失败时保留 `PendingConsumption`，记录控制面错误并通知；下一轮仍只处理该待消费记录，不得退化为扫描所有执行载体，也不得把读取失败改写成业务 `Blocked`。同一待消费记录连续读取失败达到 **3 次**仍无法处理时，按 §7.2 载体不可用升级阈值告警 Richy。
 
 若 final 缺少结构化协议头但内容可能有效，应先要求同一执行载体补发"仅协议头/缺失字段"，不得直接否定结果或机械创建新任务。执行载体不可用时保留原始内容并进入 `PendingVerification`。
 
@@ -294,7 +301,16 @@ Hermes cron（约 1 分钟）对账每轮：
 4. 只对待消费记录定向读取其 `ExecutionRef`，校验并消费；
 5. 无待消费记录时不调用任务列表或线程读取 API，只检查台账完整性、文档快照、必要 Git 依赖和健康；
 6. 记录实际读取的文档版本、状态记录、定向执行载体和错误；
-7. 继续等待下一轮或事件触发。
+7. 继续等待下一轮或事件触发；
+8. **停滞检测与升级**（见下）。
+
+### 11.1 停滞检测
+
+cron 对账在每轮额外检查长期无进展的任务，避免静默卡死（注意：仍在活动、有最近心跳或正在等待人类授权的任务不误报）：
+
+- 任务持续处于 `ContextGenerationPending` / `Ready` / `InProgress` / `PendingConsumption` 超过 **2 个 cron 周期**（约 2 分钟）无任何状态推进或读取活动 → 记录停滞并告警；仍无进展超过 **4 个 cron 周期** → 升级项目负责人（Richy）。
+- 任务处于 `Integrated` 但缺少 `IntegrationVerified` 回写（即无对应 CI/集成验证回写信号）超过 **2 个 cron 周期** → 记录停滞并告警；超过 **4 个 cron 周期** → 升级 Richy，由 Hermes 重派 `IntegrationValidationTask` 或人工介入。
+- 依赖环检测：任务因上游长期 `Ready`/`InProgress` 未满足而无法推进时，cron 在停滞升级时一并报告依赖阻塞图，便于定位环依赖（环依赖的拒登记规则见 `04` §5.2）。
 
 没有以下最小证据时不得报告"无变化"：
 
@@ -335,9 +351,16 @@ ControlPlaneErrors
 
 | 级别 | 触发 | Hermes 动作 | 失败处理 |
 |---|---|---|---|
-| 热恢复 | 单次工具/调用偶发异常 | 记日志，从最近台账快照自动续跑；重试 | 仍不行，等 cron 对账兜底 |
-| 冷恢复 | 进程崩溃/重启 | 全自动读台账 + Git 重建 `ConsumedRevision` → `RecoveryOnly` 校验 → 恢复 | **失败自动升级灾难级** |
+| 热恢复 | 单次工具/调用偶发异常 | 记日志，从最近台账快照自动续跑；重试 | 连续重试 **3 次**仍失败 → 自动升级冷恢复 |
+| 冷恢复 | 进程崩溃/重启 | 全自动读台账 + Git 重建 `ConsumedRevision` → `RecoveryOnly` 校验 → 恢复 | 失败自动升级灾难级 |
 | 灾难恢复 | 台账丢失/损坏（或冷恢复失败） | 从 Git 任务文档快照重建，确定可证明状态，其余降级待核实 | **需项目负责人（Richy）介入批准** |
+
+### 13.1 恢复升级阈值（显式）
+
+- **热 → 冷**：同一热恢复动作连续失败达到 **3 次**仍无法续跑，Hermes 自动升级为冷恢复，不再无限重试；
+- **冷 → 灾难**：冷恢复（读台账 + Git 重建 + `RecoveryOnly` 校验）失败，自动升级灾难级；
+- **灾难**：必须等待项目负责人（Richy）介入批准 `RecoveryApproved` 后才退出 `RecoveryOnly`；
+- 每次升级均记入恢复报告与台账，避免静默无限循环。
 
 ### 13.1 冷恢复步骤
 
@@ -387,6 +410,18 @@ ControlPlaneErrors
 
 Canary 未通过时，真实业务任务保持 `Planned/Ready`，不得用真实开发验证调度协议。
 
+### 14.1 Canary 失败处置（CanaryFailed）
+
+Canary 任一场景失败时进入 `CanaryFailed` 状态，并按下述路径闭环，避免任务静默卡在 `Planned/Ready` 无人知：
+
+1. 记录失败场景编号、现象与根因（控制面缺陷 / 载体异常 / 协议不匹配等）；
+2. 责任人（Hermes 工程侧）修复控制平面或载体配置；
+3. 重跑 Canary → 通过后解除真实业务任务的 `Planned/Ready` 派发冻结；
+4. 连续 **3 次**重跑仍未通过 → 告警项目负责人（Richy）人工介入，不得继续自动重试掩盖问题；
+5. 全程通过 TG / 飞书通知 Richy 当前 `CanaryFailed` 状态与处置进度。
+
+`CanaryFailed` 不是业务 `Blocked`，不污染代码任务状态；它只冻结真实高风险迭代的启动，直至 Canary 通过或 Richy 明确记录临时豁免。
+
 ## 15. 审核清单
 
 - [ ] 执行载体状态、任务状态和证据状态已经分离；
@@ -418,3 +453,4 @@ Canary 未通过时，真实业务任务保持 `Planned/Ready`，不得用真实
 | V2.5（待审核） | 2026-08-20 | WorkBuddy | 由 V2.4「09-调度控制平面与运行时台账规范」重命名+重写为 Hermes 常驻总调度模式（台账schema/三类状态/DispatchKey幂等/事件+cron双通道/单实例无租约/ExecutionRef/三级恢复/沙箱分级） |
 | V2.5（待审核） | 2026-08-20 | Hermes | 补齐作者/审核人/修订记录元信息 |
 | V2.5（待审核） | 2026-08-20 | Hermes | 审阅修订：台账绝不可提交至Git(防循环引用/自包含哈希)；冷恢复自动校验通过即完成无需Richy；EvidenceIncomplete改为已有状态InProgress |
+| V2.5（待审核） | 2026-08-20 | Hermes | 补流程缺口7条：§3.2增 ContextGenerationPending；§6.1增 CI/集成验证回写 + 候选冻结 human-gated 事件；§7.2/§8载体不可用连续3次升级 Richy；§11.1停滞检测（含 IntegrationVerified 超时升级）；§13.1恢复升级阈值（热→冷→灾难，热3次）；§14.1 CanaryFailed 状态+处置路径+连续3次告警 Richy |

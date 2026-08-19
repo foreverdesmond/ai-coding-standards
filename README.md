@@ -251,7 +251,7 @@ Full Chinese specification: continue reading below (简体中文).
 | Doc/Design Reviewer   |                  禁止 |                   禁止 |                            禁止 |
 | Coordinator（Hermes） |                  禁止 |                   禁止 |                            禁止 |
 
-说明：Coordinator（Hermes）不代执行任何 git 操作，只派发与判 gate。需要提交权限的角色（Implementer / Integrator）使用 `danger-full-access` 沙箱；Reviewer / Validator / Doc-Design Reviewer 为只读沙箱。worktree 由 Implementer 自建、Integrator 统一清理。
+说明：Coordinator（Hermes）不代执行任何 git 操作，只派发与判 gate。需要提交权限的角色（Implementer / Integrator）使用 `danger-full-access` 沙箱；Reviewer / Validator / Doc/Design Reviewer 为只读沙箱。worktree 由 Implementer 自建、Integrator 统一清理。
 
 ## 7. 验证等级概览
 
@@ -362,7 +362,7 @@ Full Chinese specification: continue reading below (简体中文).
 - [ ] DOC-DEC-022：Hermes 单实例运行，以 `DispatchKey = IterationID+TaskID+Stage+TargetIdentity` 幂等去重替代协调租约锁。（取代 V2.4 DOC-DEC-016）
 - [ ] DOC-DEC-023：调度采用事件驱动 + cron 定期对账兜底，替代共享 JSON 的 `StateRevision` 周期巡检。（取代 V2.4 DOC-DEC-016 / 019）
 - [ ] DOC-DEC-024：`ExpectedExecutionKind` 统一为四档枚举 `WorkBuddy / Codex / Human / ApprovedEquivalent`；指定执行机制不得被未经授权替代，禁止伪独立自审。（取代 V2.4 DOC-DEC-017）
-- [ ] DOC-DEC-025：通用角色收敛为 6 种（Coordinator / Implementer / Reviewer / Integrator / Validator / Doc-Design Reviewer），保留开发与 Review 分离、合并执行与审查分离底线。
+- [ ] DOC-DEC-025：通用角色收敛为 6 种（Coordinator / Implementer / Reviewer / Integrator / Validator / Doc/Design Reviewer），保留开发与 Review 分离、合并执行与审查分离底线。
 
 ---
 

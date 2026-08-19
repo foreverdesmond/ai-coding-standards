@@ -2,7 +2,7 @@
 
 <div align="center">
 
-  **Multi-Agent Development & Collaboration Standards (V2.4) | 多 Agent 开发与协作规范 (V2.4)**
+  **Multi-Agent Development & Collaboration Standards (V2.5) | 多 Agent 开发与协作规范 (V2.5)**
 
   A collection of guidelines, standards, and best practices for AI-assisted (vibe-coded) software development and multi-agent collaboration
 
@@ -31,8 +31,8 @@ This repository defines a development and multi-agent collaboration standard for
 - Standards directory & single responsibility (docs 01–08)
 - Common roles, stage map, default branch role mapping
 - Verification levels & status semantics
-- Codex & multi-agent collaboration rules
-- Evolutionary notes & V2.3 approved decisions, V2.4 pending decisions
+- Hermes-orchestrated multi-agent collaboration rules
+- Evolutionary notes & V2.3 approved decisions, V2.5 pending decisions
 
 Full Chinese specification: continue reading below (简体中文).
 
@@ -42,12 +42,15 @@ Full Chinese specification: continue reading below (简体中文).
 
 # 项目功能开发与多 Agent 协作规范
 
-> 规范版本：V2.4
+> 规范版本：V2.5
 > 规范状态：待审核（V2.3 仍为上一已审核基线）
+> 基线说明：Hermes 总调度基线（总调度由 Hermes 常驻服务承担，WorkBuddy/Codex 平行协作执行）
 > 适用范围：新功能、旧功能升级、缺陷修复、技术迁移、数据迁移、架构重构及其他软件开发任务
-> 使用对象：项目负责人、分析与设计人员、总调度、开发者、子 Agent、代码审查者、测试与运维人员
+> 使用对象：项目负责人、分析与设计人员、总调度（Hermes）、开发者、子 Agent、代码审查者、测试与运维人员
+> 作者：WorkBuddy（受 Hermes 总调度委派）
 > 原定稿日期：2026-08-11
-> 修订日期：2026-08-15
+> 修订日期：2026-08-20
+> 审核人：Richy（待审）
 
 ## 1. 目的
 
@@ -158,19 +161,19 @@ Full Chinese specification: continue reading below (简体中文).
 - 已审核提交只能由独立迭代集成任务合并到迭代开发分支；合并后还必须形成 `Integrated` 和 `IntegrationVerified` 证据。
 - 最终合并审核者只判断资格；只有独立主分支合并执行任务可以在候选、审核结论和项目负责人授权精确匹配时执行主分支合并。
 
-### 2.10 文档状态驱动调度，周期巡检消费
+### 2.10 文档状态驱动调度，事件驱动 + cron 定期对账消费
 
-- 项目声明的 `SharedRuntimeStatePath` 是唯一任务状态发现入口；子任务通过统一原子工具先写 `PendingConsumption`，再输出线程 final。详细开发任务文档只保存任务定义和最近一次持久快照。
-- 调度者和周期巡检只轮询共享 JSON 的 `StateRevision`。发现待消费记录后，才定向读取该记录绑定的线程内容，不得常态遍历全部任务或依赖跨任务 API 事件。
-- 周期巡检负责发现和消费文档状态变化，同时检查停滞、冲突、上下文失效和真实阻塞。
+- Hermes 台账记录任务状态，是唯一任务状态发现入口；子任务通过 Hermes 台账接口幂等写入待消费信号，再输出结构化协议头。详细开发任务文档只保存任务定义和最近一次 Git 持久快照（`TASK-STATE-EXCHANGE` 块）。
+- 总调度以事件驱动为主、cron 定期对账兜底：发现待消费记录后，才定向读取该记录绑定的执行载体内容，不得常态遍历全部任务。
+- 周期对账负责发现和消费文档状态变化，同时检查停滞、冲突、上下文失效和真实阻塞。
 - 单次编译失败、测试失败或未完成代码属于正常中间状态，不得在仍有活动时推断为 `Blocked` 或中断任务。
 
 ### 2.11 调度状态必须持久、可恢复并可审计
 
-- 线程运行状态、开发任务状态和证据消费状态必须分别维护，不得用 UI 的 idle/completed 推断 Review 或任务结论。
-- Coordinator、巡检和子任务必须共享一个 `SharedRuntimeStatePath`；任务状态、待消费信号和消费确认统一通过 `StateUpdateToolPath` 在短时锁内原子写入。
-- 开发任务文档中的状态块是 Git 管理的持久快照，不是活动状态真源；共享状态缺失、损坏或版本回退时进入 `RecoveryOnly`，先从最后有效文档快照和 Git 恢复，必要时只定向读取已绑定线程。
-- 项目明确要求独立 Codex 子任务时，创建失败不得改用子 Agent、当前任务自做或其他执行机制替代。
+- 执行载体状态、开发任务状态和证据消费状态必须分别维护，不得用 UI 的 idle/completed 推断 Review 或任务结论。
+- 调度状态持久于 Hermes 台账，可恢复、可审计；不再有共享 JSON 文件锁。任务状态、待消费信号和消费确认统一通过 Hermes 台账接口幂等写入。
+- 开发任务文档中的状态块是 Git 管理的持久快照，不是活动状态真源；台账缺失、损坏或版本回退时按 `09-Hermes调度与运行时台账规范` 的恢复协议处理（热自动续跑 / 冷读台账 + Git 重建 / 灾难级需 Richy 介入批准）。
+- 指定执行机制（WorkBuddy/Codex/Human）不得被未经授权替代，禁止伪独立自审。
 - 高风险迭代启动前必须通过调度协议 Canary，真实开发任务不得兼作控制平面测试。
 
 ## 3. 规范目录与单一职责
@@ -185,28 +188,28 @@ Full Chinese specification: continue reading below (简体中文).
 | [06-开发上下文包生成与使用规范](./文档规范/06-开发上下文包生成与使用规范.md) | 规定上下文包的生成、校验、探索、失效和对账 |
 | [07-子Agent任务委派与提示词规范](./文档规范/07-子Agent任务委派与提示词规范.md) | 规定角色契约、提示词结构、权限和输出状态 |
 | [08-开发验证、代码审查与合并门禁规范](./文档规范/08-开发验证、代码审查与合并门禁规范.md) | 规定 Level 0–3、Review 分工、分支门禁和合并资格 |
-| [09-调度控制平面与运行时台账规范](./文档规范/09-调度控制平面与运行时台账规范.md) | 规定开发任务文档状态面、定向消费、巡检、暂停、恢复和 Canary |
+| [09-Hermes调度与运行时台账规范](./文档规范/09-Hermes调度与运行时台账规范.md) | 规定 Hermes 台账状态面、定向消费、事件/cron 对账、暂停、恢复和 Canary |
 
 角色提示词模板位于 [`提示词模板`](./文档规范/提示词模板/README.md)。模板是委派起点，不得替代任务实际基线和自主探索。
 
 ## 4. 通用角色
 
-规范定义角色能力，不绑定具体模型或供应商：
+规范定义角色能力，不绑定具体模型或供应商。V2.5 起收敛为 6 种核心 Agent 角色（Hermes 总调度 + 5 种执行/审核角色）：
 
-| 角色 | 核心职责 | 不得承担的职责 |
+| 角色 | 核心职责 | 关键边界 |
 |---|---|---|
-| 项目负责人 | 批准业务决定、风险例外、外部操作、合并和发布 | 不因口头同意自动替代正式证据 |
-| 总调度 | 维护任务、线程和证据状态，执行幂等派发、事件消费、暂停与恢复 | 不以调度身份自行批准代码；不绕过控制平面或替换指定执行机制 |
-| 开发者 | 自主探索、实现、测试、提交证据 | 不批准自己的任务或改变需求 |
-| Coding Reviewer | 独立审查单任务 diff、设计一致性、反例和测试 | 不依赖开发者自述作结论 |
-| 返工执行者 | 精确关闭审查项并补回归测试 | 不把返工变成未经批准的重构 |
-| 迭代集成执行者 | 把准确的已审核任务提交合入迭代开发分支并记录冲突处理 | 不修改任务实现或用未审核提交替换候选 |
-| 系统集成 Reviewer | 审查跨任务接线、生产入口、并发和资源所有权 | 不用局部单测代替系统结论 |
-| 测试验证者 | 执行测试、核对环境和证据、标记证明边界 | 不把绿色结果解释为全面正确 |
-| 最终合并审核者 | 核对冻结候选、门禁、NotRun 和分支资格 | 不在审核后允许未复核代码变化 |
-| 主分支合并执行者 | 在最终审核和负责人授权后合并精确候选 | 不开发、返工、自审或替换候选 |
+| Coordinator（总调度） | 派发、巡检、判 gate | 由 Hermes 常驻服务承担；不做子 Agent 实操，不自行批准代码 |
+| Implementer（开发） | 首次开发 + 返工 + Level 0 单元测试 | 只在自己 feature 分支；跑 L0 并落证据；不批准自己 |
+| Reviewer（审核） | 审核开发成果（diff/commit） | 基于 diff + 开发者 L0 证据审，只抽查关键路径，不重跑全套单测；只读，不 merge |
+| Integrator（集成） | 合并代码：feature → iteration | 只合并已 Review 通过的精确 commit；解决冲突；不自己审自己的 merge |
+| Validator（测试验证） | 合并后的全量测试与验证（集成 L1 + 回归） | 在集成分支跑全量；只读/测试环境；不 merge |
+| Doc/Design Reviewer（文档/设计审核） | 一切文档审核 + 设计 + 工作包/上下文设计 | 上游文档、需求、设计、任务包、Context 的设计与审核 |
 
-同一人员或 Agent 可以在低风险任务中兼任部分角色，但开发与最终批准不得由同一执行主体自证完成。高风险任务必须保持独立 Coding Review 和系统集成 Review。
+**合并来源**（V2.4 → V2.5 角色收敛）：Reworker → Implementer（返工是开发的续集）；System Reviewer → Reviewer（按 Level 区分范围）；Main Merge → Integrator（同为合并执行，仅目标分支不同）；Requirements / Design / Task 三个审核 → 合一 Doc/Design Reviewer。
+
+**项目负责人（人类）**：不参与上述 Agent 角色，是最终业务决策与授权者——批准业务决定、风险例外、外部操作、合并与发布，并在真实环境门禁亲自验证。任何 Agent 不得自证批准。
+
+**保留底线（不可妥协）**：开发与 Review 分离；合并执行与审查分离；最终批准不问责开发者自己。每个任务按需启用 2~N 个角色（轻量任务只需 Implementer + Reviewer）；低风险任务可兼任部分角色，但开发与最终批准不得由同一执行主体自证完成。
 
 ## 5. 阶段地图
 
@@ -240,12 +243,14 @@ Full Chinese specification: continue reading below (简体中文).
 
 | 角色 | 任务分支 commit | 迭代分支 commit/merge | 主分支 merge |
 |---|---:|---:|---:|
-| 开发者 | 仅自己的任务分支 | 禁止 | 禁止 |
-| 返工执行者 | 仅原任务分支 | 禁止 | 禁止 |
-| Coding Reviewer | 禁止 | 禁止 | 禁止 |
-| 迭代集成执行者 | 禁止改写任务实现 | 允许合并精确已审核提交 | 禁止 |
-| 系统/最终 Reviewer | 禁止 | 禁止 | 禁止 |
-| 主分支合并执行者 | 禁止改写候选 | 禁止额外开发 | 仅在有效授权后允许 |
+| Implementer（开发） | 仅自己的 feature 分支 | 禁止 | 禁止 |
+| Reviewer（审核） | 禁止 | 禁止 | 禁止 |
+| Integrator（集成） | 禁止改写任务实现 | 允许合并精确已审核提交 | 仅在最终审核 + 负责人授权后允许 |
+| Validator（测试验证） | 禁止 | 禁止 | 禁止 |
+| Doc/Design Reviewer | 禁止 | 禁止 | 禁止 |
+| Coordinator（Hermes） | 禁止 | 禁止 | 禁止 |
+
+说明：Coordinator（Hermes）不代执行任何 git 操作，只派发与判 gate。需要提交权限的角色（Implementer / Integrator）使用 `danger-full-access` 沙箱；Reviewer / Validator / Doc-Design Reviewer 为只读沙箱。worktree 由 Implementer 自建、Integrator 统一清理。
 
 ## 7. 验证等级概览
 
@@ -300,24 +305,25 @@ Full Chinese specification: continue reading below (简体中文).
 
 小型、低风险任务可以经项目负责人批准合并部分文档，但不得省略事实调查、验收层级、设计风险、独立 Review 和合并资格判断。
 
-## 10. Codex 与多 Agent 协作规则
+## 10. Hermes 总调度与多 Agent 协作规则
 
 1. 先完整读取适用规范和已审核上游文档。
-2. 任务委派使用 `07` 的角色契约和对应模板。
-3. 上下文包必须按 `06` 生成，并显式暴露未知项和自主探索要求。
+2. 任务委派使用 `07` 的角色契约和对应模板；动态数据由 Hermes 注入。
+3. 上下文包必须按 `06` 生成，由 Doc/Design Reviewer 在依赖满足后生成，并显式暴露未知项和自主探索要求。
 4. 一个任务同一阶段只能有一个有效开发实例，除非明确拆分为互不冲突的子任务。
 5. 真实编码任务必须在独立任务分支提交；Reviewer 必须审查准确的 `CodeBaseSHA..HeadSHA`，不能只审查开发者报告、worktree 或当前主工作区。
 6. Review 失败后返回原任务返工，再由原 Reviewer 或批准的替代 Reviewer 复核。
-7. `TaskAccepted` 后由独立迭代集成任务合并准确的已审核提交；需要使用上游实现的下游任务默认依赖 `Integrated`。
-8. 派发前初始化 `09` 规定的共享本地 JSON、统一原子更新工具、Invocation、幂等键、不可变文档基线和协调租约；高风险迭代先通过 Canary，除非项目负责人对既有迭代明确记录临时豁免。
-9. 派发后由子任务通过统一工具把完成/求助状态写入共享 JSON；巡检消费 `PendingConsumption`，只对命中的记录定向读取线程，不重复派发。
-10. 任务创建返回临时请求标识时登记 `Provisioning` 并继续绑定正式任务，不得判定为失败；指定 Codex 子任务时不得用子 Agent 替代。
-11. 共享 JSON 缺失、损坏或版本回退时进入 `RecoveryOnly`，从开发任务文档最后有效快照和 Git 恢复；仅对明确缺失证据的记录定向读取任务历史。
+7. `TaskAccepted` 后由 Integrator 合并准确的已审核提交；需要使用上游实现的下游任务默认依赖 `Integrated`。
+8. 派发前由 Hermes 初始化台账记录、Invocation、幂等 DispatchKey、不可变文档基线；高风险迭代先通过 Canary，除非项目负责人对既有迭代明确记录临时豁免。
+9. 派发后子任务通过 Hermes 台账接口幂等写入完成/求助状态；Hermes 以事件驱动 + cron 兜底消费待处理记录，只对命中的记录定向读取，不重复派发。
+10. 任务创建返回临时请求标识时登记 `Provisioning` 并继续绑定正式任务，不得判定为失败；指定执行机制（WorkBuddy/Codex/Human）不得被未经授权替代。
+11. 台账缺失、损坏或版本回退时按 `09-Hermes调度与运行时台账规范` 的恢复协议处理（热自动续跑 / 冷读台账 + Git 重建 / 灾难级需 Richy 介入），仅对明确缺失证据的记录定向读取任务历史。
 12. 任务仍有活动时，不得因中间编译或测试失败推断阻塞并中断。
-13. Review 必须使用独立任务和独立执行实例，不得发回开发任务要求其自审。
+13. Review 必须使用独立执行实例，不得发回开发任务要求其自审；禁止伪独立自审。
 14. 未运行测试必须如实记录，不能以推断或其他测试替代。
 15. 未经授权不得连接、修改或删除真实外部资源。
-16. 文档、线程、任务、证据、代码、验证、合并和发布状态分别维护。
+16. 文档、执行载体、任务、证据、代码、验证、合并和发布状态分别维护。
+17. 需要提交权限的角色（Implementer / Integrator）使用 `danger-full-access` 沙箱；Hermes 单实例运行，以 DispatchKey 幂等去重替代协调租约锁。
 
 ## 11. 规范自身的演进
 
@@ -342,12 +348,20 @@ Full Chinese specification: continue reading below (简体中文).
 - [x] DOC-DEC-012：迭代集成与主分支合并分别由独立执行任务完成，Reviewer 只审核资格，不执行合并。
 - [x] DOC-DEC-013：任务完成采用开发任务文档状态驱动；周期巡检消费文档信号并按需定向取证。
 
-## 13. V2.4 待审核决定
+## 13. V2.5 待审核决定
 
-- [ ] DOC-DEC-014：新增 `09` 作为控制协议；项目共享本地 JSON 作为任务运行状态唯一实时真源，开发任务文档保存 Git 管理的持久快照。
-- [ ] DOC-DEC-015：线程状态、任务状态和证据状态分离；UI 标签和 Git HEAD 不得替代事件结论。
-- [ ] DOC-DEC-016：高风险调度必须使用共享本地 JSON、短时锁、版本复查、原子更新工具、状态指纹、幂等派发键和协调租约。
-- [ ] DOC-DEC-017：明确要求 Codex 子任务时，创建失败不得以子 Agent 或当前任务自行执行兜底。
-- [ ] DOC-DEC-018：Review 的执行状态与代码 Verdict 分离，`NotRun` 不自动等于 Review 阻塞。
-- [ ] DOC-DEC-019：共享状态缺失时进入 `RecoveryOnly`，从开发任务文档最后有效快照和 Git 重建，必要时只定向读取相关子任务。
-- [ ] DOC-DEC-020：高风险真实任务启动前必须通过包含状态区恢复、重复状态和跨 worktree 统一写入的调度 Canary。
+- [ ] DOC-DEC-021：以 Hermes 台账替代共享本地 JSON 作为任务运行状态唯一真源；开发任务文档 `TASK-STATE-EXCHANGE` 块仍为 Git 持久快照。（取代 V2.4 DOC-DEC-014 / 019）
+- [ ] DOC-DEC-022：Hermes 单实例运行，以 `DispatchKey = IterationID+TaskID+Stage+TargetIdentity` 幂等去重替代协调租约锁。（取代 V2.4 DOC-DEC-016）
+- [ ] DOC-DEC-023：调度采用事件驱动 + cron 定期对账兜底，替代共享 JSON 的 `StateRevision` 周期巡检。（取代 V2.4 DOC-DEC-016 / 019）
+- [ ] DOC-DEC-024：`ExpectedExecutionKind` 统一为四档枚举 `WorkBuddy / Codex / Human / ApprovedEquivalent`；指定执行机制不得被未经授权替代，禁止伪独立自审。（取代 V2.4 DOC-DEC-017）
+- [ ] DOC-DEC-025：通用角色收敛为 6 种（Coordinator / Implementer / Reviewer / Integrator / Validator / Doc-Design Reviewer），保留开发与 Review 分离、合并执行与审查分离底线。
+
+---
+
+## 修订记录
+
+| 版本 | 日期 | 作者 | 变更说明 |
+|---|---|---|---|
+| V2.3 | 2026-08-11 | — | V2.3 已审核通过基线 |
+| V2.4 | 2026-08-15 | — | 引入共享 JSON 状态交换区（Codex 线程调度）、角色 10 种、Codex 协作规则 |
+| V2.5 | 2026-08-20 | WorkBuddy | 标题/版本升 V2.5（Hermes 总调度基线）；§2.10/§2.11 去共享 JSON；§3 目录表 09 改名；§4 角色收敛 6 种；§6.1 Git 权限矩阵按 6 角色更新；§10 重写为 Hermes 协作规则；§13 改写为 V2.5 待审核决定（DOC-DEC-021~025） |

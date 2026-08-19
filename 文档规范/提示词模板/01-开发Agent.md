@@ -1,11 +1,11 @@
 # 开发 Agent
 
 > 规范版本：V2.5
-> 文档状态：待审核
+> 文档状态：已审核通过（V2.5 定稿基线）
 > 作者：WorkBuddy（受 Hermes 总调度委派）
 > 创建日期：2026-08-20
 > 最后更新：2026-08-20
-> 审核人：Richy（待审）
+> 审核人：Richy（已审核）
 > 角色归属：对应 README §4 的 Implementer，本模板为首次实现专用角色契约
 
 目标：在批准范围内实现 `<task-id>`，完成 Level 0 自检后提交独立 Review。Context L2 仅在任务标记适用时读取。
@@ -72,3 +72,4 @@ StatePublishStatus: Published / StatePublishFailed
 |---|---|---|---|
 | V2.4 | 2026-08-15 | — | 模板沿用 V2.4 内容 |
 | V2.5 | 2026-08-20 | WorkBuddy | 补统一文档头与修订记录；标注角色归属 Implementer；修正输出协议残留（StateUpdateToolPath/SharedRuntimeStatePath → 输出结构化协议头由 Hermes 幂等写台账，执行 Agent 不直接写） |
+| V2.5 定稿 | 2026-08-20 | WorkBuddy | 评审通过，标记为 V2.5 正式基线 |

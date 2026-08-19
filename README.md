@@ -44,14 +44,14 @@ Full Chinese specification: continue reading below (简体中文).
 # 项目功能开发与多 Agent 协作规范
 
 > 规范版本：V2.5
-> 规范状态：待审核（V2.3 仍为上一已审核基线）
+> 规范状态：已审核通过（V2.5 定稿基线）
 > 基线说明：Hermes 总调度基线（总调度由 Hermes 常驻服务承担，WorkBuddy/Codex 平行协作执行）
 > 适用范围：新功能、旧功能升级、缺陷修复、技术迁移、数据迁移、架构重构及其他软件开发任务
 > 使用对象：项目负责人、分析与设计人员、总调度（Hermes）、开发者、子 Agent、代码审查者、测试与运维人员
 > 作者：WorkBuddy（受 Hermes 总调度委派）
 > 原定稿日期：2026-08-11
 > 修订日期：2026-08-20
-> 审核人：Richy（待审）
+> 审核人：Richy（已审核）
 
 ## 1. 目的
 
@@ -358,13 +358,13 @@ Full Chinese specification: continue reading below (简体中文).
 - [x] DOC-DEC-019：共享状态缺失时进入 `RecoveryOnly`，从开发任务文档最后有效快照和 Git 重建，必要时只定向读取相关子任务。
 - [x] DOC-DEC-020：高风险真实任务启动前必须通过包含状态区恢复、重复状态和跨 worktree 统一写入的调度 Canary。
 
-## 13. V2.5 待审核决定
+## 13. V2.5 已审核决定
 
-- [ ] DOC-DEC-021：以 Hermes 台账替代共享本地 JSON 作为任务运行状态唯一真源；开发任务文档 `TASK-STATE-EXCHANGE` 块仍为 Git 持久快照。（取代 V2.4 DOC-DEC-014 / 019）
-- [ ] DOC-DEC-022：Hermes 单实例运行，以 `DispatchKey = IterationID+TaskID+Stage+TargetIdentity` 幂等去重替代协调租约锁。（取代 V2.4 DOC-DEC-016）
-- [ ] DOC-DEC-023：调度采用事件驱动 + cron 定期对账兜底，替代共享 JSON 的 `StateRevision` 周期巡检。（取代 V2.4 DOC-DEC-016 / 019）
-- [ ] DOC-DEC-024：`ExpectedExecutionKind` 统一为四档枚举 `WorkBuddy / Codex / Human / ApprovedEquivalent`；指定执行机制不得被未经授权替代，禁止伪独立自审。（取代 V2.4 DOC-DEC-017）
-- [ ] DOC-DEC-025：通用角色收敛为 6 种（Coordinator / Implementer / Reviewer / Integrator / Validator / Doc/Design Reviewer），保留开发与 Review 分离、合并执行与审查分离底线。
+- [x] DOC-DEC-021：以 Hermes 台账替代共享本地 JSON 作为任务运行状态唯一真源；开发任务文档 `TASK-STATE-EXCHANGE` 块仍为 Git 持久快照。（取代 V2.4 DOC-DEC-014 / 019）
+- [x] DOC-DEC-022：Hermes 单实例运行，以 `DispatchKey = IterationID+TaskID+Stage+TargetIdentity` 幂等去重替代协调租约锁。（取代 V2.4 DOC-DEC-016）
+- [x] DOC-DEC-023：调度采用事件驱动 + cron 定期对账兜底，替代共享 JSON 的 `StateRevision` 周期巡检。（取代 V2.4 DOC-DEC-016 / 019）
+- [x] DOC-DEC-024：`ExpectedExecutionKind` 统一为四档枚举 `WorkBuddy / Codex / Human / ApprovedEquivalent`；指定执行机制不得被未经授权替代，禁止伪独立自审。（取代 V2.4 DOC-DEC-017）
+- [x] DOC-DEC-025：通用角色收敛为 6 种（Coordinator / Implementer / Reviewer / Integrator / Validator / Doc/Design Reviewer），保留开发与 Review 分离、合并执行与审查分离底线。
 
 ---
 
@@ -377,3 +377,4 @@ Full Chinese specification: continue reading below (简体中文).
 | V2.5 | 2026-08-20 | WorkBuddy | 标题/版本升 V2.5（Hermes 总调度基线）；§2.10/§2.11 去共享 JSON；§3 目录表 09 改名；§4 角色收敛 6 种；§6.1 Git 权限矩阵按 6 角色更新；§10 重写为 Hermes 协作规则；§13 改写为 V2.5 待审核决定（DOC-DEC-021~025） |
 | V2.5 | 2026-08-20 | Hermes | 审阅补充：ReleaseReady 定义为发布前最终状态；§2.5 明确 Reviewer 同角色按 Level 区分 |
 | V2.5 | 2026-08-20 | Hermes | 统一 Doc/Design Reviewer 提交权限为 danger-full-access；§12 标题改 V2.3/V2.4 历史已审核决定并注明 V2.5 取代 |
+| V2.5 定稿 | 2026-08-20 | WorkBuddy | 评审通过，标记为 V2.5 正式基线 |

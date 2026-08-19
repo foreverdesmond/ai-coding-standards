@@ -1,11 +1,11 @@
 # Coding Reviewer
 
 > 规范版本：V2.5
-> 文档状态：待审核
+> 文档状态：已审核通过（V2.5 定稿基线）
 > 作者：WorkBuddy（受 Hermes 总调度委派）
 > 创建日期：2026-08-20
 > 最后更新：2026-08-20
-> 审核人：Richy（待审）
+> 审核人：Richy（已审核）
 
 目标：独立审查 `<task-id>` 在 `<task-branch>` 上的 `<code-base-sha>..<head-sha>`，形成独立风险模型并尝试推翻正确性主张。
 
@@ -65,3 +65,4 @@ StatePublishStatus: Published / StatePublishFailed
 |---|---|---|---|
 | V2.4 | 2026-08-15 | — | 模板沿用 V2.4 内容 |
 | V2.5 | 2026-08-20 | WorkBuddy | 补统一文档头与修订记录；正文无实质改动 |
+| V2.5 定稿 | 2026-08-20 | WorkBuddy | 评审通过，标记为 V2.5 正式基线 |

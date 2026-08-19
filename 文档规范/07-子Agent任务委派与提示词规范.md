@@ -1,11 +1,11 @@
 # 子任务与 Agent 委派及提示词规范
 
 > 规范版本：V2.5
-> 规范状态：待审核（V2.3 仍为上一已审核基线）
+> 规范状态：已审核通过（V2.5 定稿基线）
 > 适用范围：使用 Agent 执行开发、Review、测试、调度或合并审核
 > 作者：WorkBuddy（受 Hermes 总调度委派）
 > 修订日期：2026-08-20
-> 审核人：Richy（待审）
+> 审核人：Richy（已审核）
 
 ## 1. 单一职责
 
@@ -263,3 +263,4 @@ UI 显示 idle/completed、Git HEAD 未变化或读取接口暂时无结果，�
 | V2.5 | 2026-08-20 | WorkBuddy | §2.1 枚举四档（WorkBuddy/Codex/Human/ApprovedEquivalent）；§4 动态数据 Hermes 注入；§5 载体分离≠视角独立；§8 共享 JSON→Hermes 台账 + 事件/cron；ExecutionThreadID→ExecutionRef |
 | V2.5 | 2026-08-20 | Hermes | 审阅修订：§2 角色列表收敛为 6 种核心角色，扩展角色并入映射说明 |
 | V2.5（待审核） | 2026-08-20 | Hermes | §8.2 同步 IntegrationVerified 执行主体 = Integrator（或独立 IntegrationValidationTask），不依赖外部 CI webhook（与 09 §6.1 / 08 §3.4 一致） |
+| V2.5 定稿 | 2026-08-20 | WorkBuddy | 评审通过，标记为 V2.5 正式基线 |

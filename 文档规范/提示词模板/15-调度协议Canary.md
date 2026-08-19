@@ -1,11 +1,11 @@
 # 调度协议 Canary（Hermes 闭环 Canary 配置）
 
 > 规范版本：V2.5
-> 文档状态：待审核
+> 文档状态：已审核通过（V2.5 定稿基线）
 > 作者：WorkBuddy（受 Hermes 总调度委派）
 > 创建日期：2026-08-20
 > 最后更新：2026-08-20
-> 审核人：Richy（待审）
+> 审核人：Richy（已审核）
 
 目标：在不修改业务代码、不连接真实外部资源的条件下，验证 `<iteration-id>` 的任务派发、台账状态生产/消费、幂等、暂停和恢复协议。Canary 未通过时不得启动真实高风险任务；既有迭代仅可由项目负责人明确记录临时豁免。
 
@@ -84,3 +84,4 @@ RequiredFixes:
 | V2.4 | 2026-08-15 | — | Codex 调度协议 Canary 提示词（隔离共享 JSON + 锁路径 + Codex 创建兜底禁令） |
 | V2.5 | 2026-08-20 | WorkBuddy | 重写为 Hermes 闭环 Canary：删隔离共享 JSON/锁/Codex 兜底禁令；新增多实例防重、事件丢失 cron 兜底、Hermes 重启热恢复 |
 | V2.5（待审核） | 2026-08-20 | Hermes | 增场景 18 Canary 失败处置闭环（CanaryFailed→修复→重跑→连续3次告警 Richy），输出增 CanaryFailedScenarios 字段，与 09 §14.1 一致 |
+| V2.5 定稿 | 2026-08-20 | WorkBuddy | 评审通过，标记为 V2.5 正式基线 |

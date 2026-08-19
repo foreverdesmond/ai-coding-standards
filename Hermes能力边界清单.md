@@ -23,11 +23,13 @@
 
 | 项 | 确认结果 |
 |---|---|
-| 自身存储 | Hermes 用 **SQLite 会话库** 保存会话/记忆 |
+| 自身存储 | Hermes 框架用 **SQLite 会话库** 保存会话/记忆（框架级，非调度台账） |
 | 项目台账载体 | **本地 JSON 状态文件**（项目目录内、**不进 Git**）+ 可选 SQLite；由 Hermes 维护 |
 | 台账内容 | 任务/阶段/状态/证据指针/依赖图/调度消费水位(ConsumedRevision) |
 | 不可变快照 | 开发任务文档的 `TASK-STATE-EXCHANGE` 块仍作为 **Git 持久快照**（跨重启/灾难恢复用） |
 | 持久可恢复性 | 台账持久化，Hermes 重启可读台账 + Git 重建 |
+
+> **重要区分**：**调度台账 ≠ Hermes 会话库**。Hermes 会话库是框架用来保存聊天/记忆的 SQLite；调度台账是 Hermes 为开发迭代专门维护的本地 JSON 状态文件（调度专用，含任务/阶段/证据/依赖），两者是不同存储，不可混用。
 
 ## 3. 事件源与巡检能力
 
@@ -59,7 +61,7 @@
 ```
 POST http://10.192.241.5:4501/v1/threads
 body: { prompt, cwd, model, modelProvider, sandbox, approval }
-- modelProvider: openai(原生存章) / opencodex(CodexSplit第三方)
+- modelProvider: openai(原生模型) / opencodex(CodexSplit第三方)
 - sandbox: read-only / workspace-write(写文件) / danger-full-access(需要git时)
 ```
 
@@ -81,7 +83,7 @@ body: { prompt, cwd, model, modelProvider, sandbox, approval }
 | 级别 | 触发 | Hermes 动作 | 失败处理 |
 |---|---|---|---|
 | 热恢复 | 单次工具/调用偶发异常 | 记日志，从最近台账快照自动续跑；重试 | 仍不行，等 cron 对账兜底 |
-| 冷恢复 | 进程崩溃/重启 | **全自动**读台账+Git 重建`ConsumedRevision`→RecoveryOnly 校验→恢复 | ❌ **失败自动升级灾难级** |
+| 冷恢复 | 进程崩溃/重启 | **全自动**读台账+Git 重建`ConsumedRevision`→RecoveryOnly 校验→**自动校验通过即完成（无需 Richy 介入）** | ❌ **失败自动升级灾难级**（灾难级才需 Richy） |
 | 灾难恢复 | 台账丢失/损坏（或冷恢复失败） | 从 Git 任务文档快照重建，确定可证明状态，其余降级待核实 | **需 Richy 介入批准** |
 
 ## 8. 通知与呈现
@@ -111,3 +113,4 @@ body: { prompt, cwd, model, modelProvider, sandbox, approval }
 | 版本 | 日期 | 修订人 | 说明 |
 |---|---|---|---|
 | V2.5（草稿） | 2026-08-20 | Hermes | 首次发布：确认 Hermes 运行形态/台账/事件/cron/派发/权限/恢复能力；补齐文档版本号与审核状态元信息（Richy 反馈） |
+| V2.5（草稿） | 2026-08-20 | Hermes | 审阅修订：修笔误'原生存章'→'原生模型'；§7冷恢复同步09(自动完成无需Richy)；§2明确区分调度台账与Hermes会话库 |

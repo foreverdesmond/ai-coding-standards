@@ -15,25 +15,20 @@
 
 ## 2. 角色按需选择
 
-最小角色集合：
+V2.5 收敛为 6 种核心角色（详见 README §4），每个任务按需启用 2~N 个：
 
-- Implementer：实现并自证；
-- Reviewer：独立检查，开发者不能自批。
+| 角色 | 核心职责 | 关键边界 |
+|---|---|---|
+| Coordinator（总调度） | 派发、巡检、判 gate | Hermes 常驻服务承担，不做子 Agent 实操 |
+| Implementer（开发） | 首次开发 + 返工 + L0 单测 | 只在自己 feature 分支；不批准自己 |
+| Reviewer（审核） | 审核开发成果（diff/commit） | 基于 diff + L0 证据审；只读，不 merge |
+| Integrator（集成） | 合并 feature → iteration | 只合并已 approved 的精确 commit；不自己审自己的 merge |
+| Validator（测试验证） | 合并后全量测试（L1+回归） | 在集成分支跑全量；只读/测试环境；不 merge |
+| Doc/Design Reviewer（文档/设计审核） | 文档审核 + 设计 + 工作包/上下文 | 纯文档工作归其；低风险设计不审、高风险同角色他审 |
 
-按任务需要增加：
+**合并来源（V2.4 → V2.5）**：Rework Implementer → Implementer（返工是开发的续集）；System Reviewer → Reviewer（按 Level 区分）；Merge Reviewer → Reviewer（合并资格审核视角）；Iteration Integrator / Main Merge Executor → Integrator（同为合并执行，仅目标分支不同）；Requirements/Design/Task Reviewer → Doc/Design Reviewer（合一）。
 
-- Coordinator：多任务依赖、并行、巡检和状态真源；
-- Validator：独立执行测试或人工步骤证据整理；
-- System Reviewer：跨任务和 Level 1 整体审查；
-- Merge Reviewer：冻结候选的合并资格；
-- Iteration Integrator：把准确的已审核任务提交合入迭代开发分支；
-- Main Merge Executor：在最终审核和负责人授权后执行主分支合并；
-- Rework Implementer：可以由原 Implementer 承担，不要求创建新角色；
-- Requirements/Design/Task Reviewer：只在对应文档需要独立审核时使用。
-
-模板数量不代表每个迭代必须启动同样数量的 Agent。轻量任务通常只需 Implementer 和独立 Reviewer。
-
-> **角色映射（V2.5 收敛，详见 README §4）**：上述扩展角色已并入 6 种核心角色——System Reviewer → Reviewer（按 Level 区分范围）；Merge Reviewer → Reviewer（合并资格审核视角）；Main Merge Executor → Integrator（同为合并执行，仅目标分支不同）；Iteration Integrator → Integrator；Rework Implementer → Implementer（返工是开发的续集）；Requirements/Design/Task Reviewer → Doc/Design Reviewer（合一）。模板仍是按需角色契约，不改变 6 角色收敛口径。
+**保留底线**：开发与 Review 分离；合并执行与审查分离；最终批准不问责开发者自己。轻量任务通常只需 Implementer + 独立 Reviewer。
 
 ### 2.1 执行机制必须显式配置
 
@@ -264,3 +259,4 @@ UI 显示 idle/completed、Git HEAD 未变化或读取接口暂时无结果，�
 | V2.3 | 2026-08-11 | — | V2.3 已审核通过基线 |
 | V2.4 | 2026-08-15 | — | 引入 CodexThread/SubAgent 执行机制与共享 JSON 轮询 |
 | V2.5 | 2026-08-20 | WorkBuddy | §2.1 枚举四档（WorkBuddy/Codex/Human/ApprovedEquivalent）；§4 动态数据 Hermes 注入；§5 载体分离≠视角独立；§8 共享 JSON→Hermes 台账 + 事件/cron；ExecutionThreadID→ExecutionRef |
+| V2.5 | 2026-08-20 | Hermes | 审阅修订：§2 角色列表收敛为 6 种核心角色，扩展角色并入映射说明 |

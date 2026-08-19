@@ -210,9 +210,9 @@ Hermes → 执行载体：
 |---|---|---|
 | 只读调研 / 代码审核 | read-only | Reviewer、只读调查 |
 | 写文档 / 写证据 | workspace-write | 不触碰 `.git` |
-| **需要 git 提交**（开发 / 集成 / 合并） | danger-full-access | `.git` 在 workspace-write 下为 protected path |
+| **需要 git 提交**（开发 / 集成（含合并）/ 文档设计） | danger-full-access | `.git` 在 workspace-write 下为 protected path |
 
-需要 `git add/commit/merge/push` 的角色（Implementer、Integrator）使用 `danger-full-access`。Hermes 不代执行 git；worktree 创建由 Implementer 自办（Hermes 只派发 TaskID/base 分支/worktree 目录），审核由 Reviewer 只读进入，清理由 Integrator 统一执行（详见《Hermes流程与边界决议》C5/D2/D3b）。
+需要 `git add/commit/merge/push` 的角色（Implementer、Integrator、Doc/Design Reviewer——后者需提交设计/工作包/上下文文档）使用 `danger-full-access`。Reviewer、Validator 为只读沙箱。Hermes 不代执行 git；worktree 创建由 Implementer 自办（Hermes 只派发 TaskID/base 分支/worktree 目录），审核由 Reviewer 只读进入，清理由 Integrator 统一执行（详见《Hermes流程与边界决议》C5/D2/D3b）。
 
 ## 8. 状态生产与消费协议
 

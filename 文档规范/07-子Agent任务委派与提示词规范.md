@@ -9,7 +9,7 @@
 
 ## 1. 单一职责
 
-本文只规定如何选择执行机制和角色、组装提示词以及保持角色独立。各角色的详细执行契约以 [`提示词模板`](./提示词模板/README.md) 为唯一真源，不在正文重复；任务身份、事件、台账、巡检和恢复以 [`09-调度控制平面与运行时台账规范`](./09-调度控制平面与运行时台账规范.md) 为唯一真源。
+本文只规定如何选择执行机制和角色、组装提示词以及保持角色独立。各角色的详细执行契约以 [`提示词模板`](./提示词模板/README.md) 为唯一真源，不在正文重复；任务身份、事件、台账、巡检和恢复以 [`09-Hermes调度与运行时台账规范`](./09-Hermes调度与运行时台账规范.md) 为唯一真源。
 
 规范定义能力，不绑定模型、供应商或版本。具体执行实例由项目配置。
 
@@ -32,6 +32,8 @@
 - Requirements/Design/Task Reviewer：只在对应文档需要独立审核时使用。
 
 模板数量不代表每个迭代必须启动同样数量的 Agent。轻量任务通常只需 Implementer 和独立 Reviewer。
+
+> **角色映射（V2.5 收敛，详见 README §4）**：上述扩展角色已并入 6 种核心角色——System Reviewer → Reviewer（按 Level 区分范围）；Merge Reviewer → Reviewer（合并资格审核视角）；Main Merge Executor → Integrator（同为合并执行，仅目标分支不同）；Iteration Integrator → Integrator；Rework Implementer → Implementer（返工是开发的续集）；Requirements/Design/Task Reviewer → Doc/Design Reviewer（合一）。模板仍是按需角色契约，不改变 6 角色收敛口径。
 
 ### 2.1 执行机制必须显式配置
 
@@ -241,8 +243,8 @@ UI 显示 idle/completed、Git HEAD 未变化或读取接口暂时无结果，�
 - [ ] Review 视角未被开发上下文提前限制；
 - [ ] 停止条件明确；
 - [ ] 已通过派发前清单，并配置文档状态生产/消费与周期巡检；
-- [ ] 已配置唯一状态区、幂等 DispatchKey、协调租约、暂停、恢复和适用 Canary；
-- [ ] 指定 Codex 子任务时没有未经授权的执行机制兜底；
+- [ ] 已配置唯一台账（`LedgerLocation`）、幂等 `DispatchKey`、单实例幂等去重（无协调租约锁）、暂停、三级恢复和适用 Canary；
+- [ ] 指定执行机制（WorkBuddy/Codex/Human）不被未经授权替代（禁止伪独立自审）；
 - [ ] 未绑定不必要的具体模型、业务或工具。
 
 ## 10. 模板维护

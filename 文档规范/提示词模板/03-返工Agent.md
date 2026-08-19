@@ -1,5 +1,12 @@
 # 返工 Agent
 
+> 规范版本：V2.5
+> 文档状态：待审核
+> 作者：WorkBuddy（受 Hermes 总调度委派）
+> 创建日期：2026-08-20
+> 最后更新：2026-08-20
+> 审核人：Richy（待审）
+
 目标：在原任务 `<task-id>` 内关闭 `<review-id>` 的 Findings，并提交复核。
 
 规则：
@@ -42,3 +49,12 @@ StatePublishStatus: Published / StatePublishFailed
 ```
 
 `ExecutionStatus: Blocked` 时 `Status` 必须为 `Blocked`；新提交必须返回新的 `NewHeadSHA`，不得复用旧 Review 结论。输出 final 前必须先发布对应返工状态记录。
+
+---
+
+## 修订记录
+
+| 版本 | 日期 | 修订人 | 说明 |
+|---|---|---|---|
+| V2.4 | 2026-08-15 | — | 模板沿用 V2.4 内容 |
+| V2.5 | 2026-08-20 | WorkBuddy | 补统一文档头与修订记录；正文无实质改动 |

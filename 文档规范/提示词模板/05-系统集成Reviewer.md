@@ -1,5 +1,13 @@
 # 系统集成 Reviewer
 
+> 规范版本：V2.5
+> 文档状态：待审核
+> 作者：WorkBuddy（受 Hermes 总调度委派）
+> 创建日期：2026-08-20
+> 最后更新：2026-08-20
+> 审核人：Richy（待审）
+> 角色归属：对应 README §4 的 Reviewer（系统集成视角），本模板为 Level 1 整体审查专用角色契约
+
 目标：对迭代分支冻结候选 `<candidate-commit>` 执行 Level 1 整体审查，判断多个已 `Integrated` 且完成受影响检查的任务组合后是否正确。
 
 重点：
@@ -41,3 +49,12 @@ IntegrationBranchRecommendation:
 ```
 
 执行阻塞时不得伪造系统 Verdict；应把 `Verdict` 写为 `NotIssued`。测试 `NotRun` 不自动等于系统 Review 阻塞。
+
+---
+
+## 修订记录
+
+| 版本 | 日期 | 修订人 | 说明 |
+|---|---|---|---|
+| V2.4 | 2026-08-15 | — | 模板沿用 V2.4 内容 |
+| V2.5 | 2026-08-20 | WorkBuddy | 补统一文档头与修订记录；标注角色归属 Reviewer（系统集成视角）；正文无实质改动 |

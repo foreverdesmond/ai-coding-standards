@@ -156,10 +156,10 @@ Full Chinese specification: continue reading below (简体中文).
 ### 2.9 开发、审核与合并职责分离
 
 - 真实编码任务必须在当前迭代所属的独立任务分支中开发并提交；worktree 只是工作目录，不是审核身份。
-- 普通开发者和返工执行者只能向自己的任务分支提交，不得直接提交或合并到迭代开发分支、长期集成分支、稳定分支或项目默认主分支。
+- 普通开发者（Implementer，含返工）只能向自己的任务分支提交，不得直接提交或合并到迭代开发分支、长期集成分支、稳定分支或项目默认主分支。
 - `TaskAccepted` 只表示指定任务提交通过 Level 0，不表示已经进入迭代候选。
-- 已审核提交只能由独立迭代集成任务合并到迭代开发分支；合并后还必须形成 `Integrated` 和 `IntegrationVerified` 证据。
-- 最终合并审核者只判断资格；只有独立主分支合并执行任务可以在候选、审核结论和项目负责人授权精确匹配时执行主分支合并。
+- 已审核提交只能由 Integrator 以独立迭代集成任务合并到迭代开发分支；合并后还必须形成 `Integrated` 和 `IntegrationVerified` 证据。
+- 最终合并审核只判断资格；只有 Integrator 以独立主分支合并执行任务可以在候选、审核结论和项目负责人授权精确匹配时执行主分支合并。
 
 ### 2.10 文档状态驱动调度，事件驱动 + cron 定期对账消费
 
@@ -220,7 +220,7 @@ Full Chinese specification: continue reading below (简体中文).
 | 设计 | 需求落点、运行时所有权、失败语义、SOLID 和测试策略明确 | `03` |
 | 任务 | 路线、任务边界、系统集成责任和 Context 策略可执行 | `04` |
 | Context/委派 | 适用的 Context L2、角色提示词和不可变基线有效 | `06`、`07` |
-| 调度控制面 | 文档状态生产/消费、锁、租约、恢复和 Canary 可执行 | `09` |
+| 调度控制面 | 台账状态生产/消费、单实例幂等（DispatchKey）、三级恢复和 Canary 可执行 | `09` |
 | Level 0–3 | 对应验证状态和证据满足项目门禁 | `08` |
 | 变更/合并 | 冻结候选、批准和证据仍然有效 | `05`、`08` |
 
@@ -257,7 +257,7 @@ Full Chinese specification: continue reading below (简体中文).
 | 等级 | 目标 | 典型执行者 | 默认分支动作 |
 |---|---|---|---|
 | Level 0 | 单任务编译、单元测试、定向组件测试和 Coding Review | 开发者 + 独立 Reviewer | 形成 `TaskAccepted` 的精确任务提交 |
-| Level 1 | 全任务组合、组件/Fake 集成、全量自动化和系统 Review | 系统集成 Reviewer | 合入长期集成分支 |
+| Level 1 | 全任务组合、组件/Fake 集成、全量自动化和系统 Review | Reviewer（系统集成视角） | 合入长期集成分支 |
 | Level 2 | 生产形态入口、小范围系统冒烟、现有集成环境真实路径 | 项目负责人运行 + Agent 辅助 | 保持在长期集成分支并返工闭环 |
 | Level 3 | 真实外部环境和版本级验收 | 项目负责人授权，Agent 辅助 | 申请合入稳定分支 |
 
@@ -273,7 +273,7 @@ Full Chinese specification: continue reading below (简体中文).
 
 统一使用：
 
-- `Pending`、`Ready`、`InProgress`、`Submitted`、`InReview`、`ChangesRequested`、`TaskAccepted`、`Blocked`、`Cancelled`；
+- `Planned`、`Ready`、`InProgress`、`Submitted`、`InReview`、`ChangesRequested`、`TaskAccepted`、`Blocked`、`Cancelled`；
 - `MergePending`、`Integrated`、`IntegrationVerified`；
 - `ComponentVerified`、`SystemVerified`、`ExternalVerified`；
 - `MergeBlocked`、`MergeApproved`、`Merged`；

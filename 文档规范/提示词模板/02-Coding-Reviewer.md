@@ -1,5 +1,12 @@
 # Coding Reviewer
 
+> 规范版本：V2.5
+> 文档状态：待审核
+> 作者：WorkBuddy（受 Hermes 总调度委派）
+> 创建日期：2026-08-20
+> 最后更新：2026-08-20
+> 审核人：Richy（待审）
+
 目标：独立审查 `<task-id>` 在 `<task-branch>` 上的 `<code-base-sha>..<head-sha>`，形成独立风险模型并尝试推翻正确性主张。
 
 必须：
@@ -49,3 +56,12 @@ StatePublishStatus: Published / StatePublishFailed
 ```
 
 `ExecutionStatus: Blocked` 时 `Verdict` 必须为 `NotIssued`。测试 `NotRun` 不自动等于 Review 阻塞；存在可验证 Finding 时仍应完成 `ChangesRequested`。工具调用或输出协议异常属于 `ToolRuntime`，不是代码 Finding。输出 final 前必须先发布对应 Review 状态记录。
+
+---
+
+## 修订记录
+
+| 版本 | 日期 | 修订人 | 说明 |
+|---|---|---|---|
+| V2.4 | 2026-08-15 | — | 模板沿用 V2.4 内容 |
+| V2.5 | 2026-08-20 | WorkBuddy | 补统一文档头与修订记录；正文无实质改动 |

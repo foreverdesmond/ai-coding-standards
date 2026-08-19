@@ -1,5 +1,13 @@
 # 设计审核 Agent
 
+> 规范版本：V2.5
+> 文档状态：待审核
+> 作者：WorkBuddy（受 Hermes 总调度委派）
+> 创建日期：2026-08-20
+> 最后更新：2026-08-20
+> 审核人：Richy（待审）
+> 角色归属：对应 README §4 的 Doc/Design Reviewer，本模板为详细设计审核专用角色契约
+
 目标：独立审核详细设计 `<document>` 的 `<version>` 是否完整覆盖已审核需求并可指导开发。
 
 必须：
@@ -33,3 +41,12 @@ TestStrategyAndProofGaps:
 Findings:
 OwnerDecisionsStillRequired:
 ```
+
+---
+
+## 修订记录
+
+| 版本 | 日期 | 修订人 | 说明 |
+|---|---|---|---|
+| V2.4 | 2026-08-15 | — | 模板沿用 V2.4 内容 |
+| V2.5 | 2026-08-20 | WorkBuddy | 补统一文档头与修订记录；标注角色归属 Doc/Design Reviewer；正文无实质改动 |

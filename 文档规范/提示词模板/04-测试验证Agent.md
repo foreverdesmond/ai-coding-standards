@@ -1,5 +1,12 @@
 # 测试验证 Agent
 
+> 规范版本：V2.5
+> 文档状态：待审核
+> 作者：WorkBuddy（受 Hermes 总调度委派）
+> 创建日期：2026-08-20
+> 最后更新：2026-08-20
+> 审核人：Richy（待审）
+
 目标：在 `<commit>`、`<environment>` 上执行 `<verification-scope>` 并形成可复核证据。
 
 规则：
@@ -37,3 +44,12 @@ RawEvidence:
 ```
 
 `ExecutionStatus: Blocked` 时 `Status` 必须为 `NotIssued`。单个测试 `NotRun` 不等于验证任务执行阻塞。
+
+---
+
+## 修订记录
+
+| 版本 | 日期 | 修订人 | 说明 |
+|---|---|---|---|
+| V2.4 | 2026-08-15 | — | 模板沿用 V2.4 内容 |
+| V2.5 | 2026-08-20 | WorkBuddy | 补统一文档头与修订记录；正文无实质改动 |

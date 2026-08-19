@@ -1,5 +1,13 @@
 # 迭代集成执行 Agent
 
+> 规范版本：V2.5
+> 文档状态：待审核
+> 作者：WorkBuddy（受 Hermes 总调度委派）
+> 创建日期：2026-08-20
+> 最后更新：2026-08-20
+> 审核人：Richy（待审）
+> 角色归属：对应 README §4 的 Integrator，本模板为迭代集成合并专用角色契约
+
 目标：把 `<task-id>` 的准确已审核提交集合 `<reviewed-commit-set>` 从 `<task-branch>` 按 `<integration-method>` 合入 `<iteration-branch>`，或按已通过门禁把非主分支冻结候选提升到指定共享集成分支。
 
 前置门禁：
@@ -44,3 +52,12 @@ AffectedChecks:
 NotRun:
 NextRequiredAction:
 ```
+
+---
+
+## 修订记录
+
+| 版本 | 日期 | 修订人 | 说明 |
+|---|---|---|---|
+| V2.4 | 2026-08-15 | — | 模板沿用 V2.4 内容 |
+| V2.5 | 2026-08-20 | WorkBuddy | 补统一文档头与修订记录；标注角色归属 Integrator；正文无实质改动 |

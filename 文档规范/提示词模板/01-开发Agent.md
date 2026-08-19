@@ -1,5 +1,13 @@
 # 开发 Agent
 
+> 规范版本：V2.5
+> 文档状态：待审核
+> 作者：WorkBuddy（受 Hermes 总调度委派）
+> 创建日期：2026-08-20
+> 最后更新：2026-08-20
+> 审核人：Richy（待审）
+> 角色归属：对应 README §4 的 Implementer，本模板为首次实现专用角色契约
+
 目标：在批准范围内实现 `<task-id>`，完成 Level 0 自检后提交独立 Review。Context L2 仅在任务标记适用时读取。
 
 开始编码前：
@@ -54,4 +62,13 @@ PublishedSignalRevision:
 StatePublishStatus: Published / StatePublishFailed
 ```
 
-`ExecutionStatus: Blocked` 时 `Status` 必须为 `Blocked`。没有 `HeadSHA` 的真实编码任务不得报告 `Submitted`。输出 final 前必须先通过 `StateUpdateToolPath` 把同一结果写入 `SharedRuntimeStatePath` 的 `StateRecordID` 并发布 `PendingConsumption`。
+`ExecutionStatus: Blocked` 时 `Status` 必须为 `Blocked`。没有 `HeadSHA` 的真实编码任务不得报告 `Submitted`。输出 final 前必须先输出本模板规定的结构化协议头（含 `StateRecordID`），由 Hermes 消费后幂等写入台账；执行 Agent 不直接写台账。
+
+---
+
+## 修订记录
+
+| 版本 | 日期 | 修订人 | 说明 |
+|---|---|---|---|
+| V2.4 | 2026-08-15 | — | 模板沿用 V2.4 内容 |
+| V2.5 | 2026-08-20 | WorkBuddy | 补统一文档头与修订记录；标注角色归属 Implementer；修正输出协议残留（StateUpdateToolPath/SharedRuntimeStatePath → 输出结构化协议头由 Hermes 幂等写台账，执行 Agent 不直接写） |

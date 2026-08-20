@@ -4,7 +4,7 @@
 > 规范状态：已审核通过（V2.5 定稿基线）
 > 适用范围：使用 Agent 执行开发、Review、测试、调度或合并审核
 > 作者：WorkBuddy（受 Hermes 总调度委派）
-> 修订日期：2026-08-20
+> 修订日期：2026-08-21
 > 审核人：Richy（已审核）
 
 ## 1. 单一职责
@@ -79,7 +79,7 @@ InvocationID
 - Reviewer 先独立形成风险模型，再读取开发上下文包；
 - SOLID、测试证明边界和独立风险假设；
 - 不允许直接修改代码或更新最终任务状态，除非明确授权角色变化。
-- `TaskBranch`、`CodeBaseSHA`、`HeadSHA` 与准确 `CodeBaseSHA..HeadSHA`；Review 不得改审当前主工作区或其他分支。
+- `TaskBranch`、`CodeBaseSHA`、`HeadSHA` 与准确 `CodeBaseSHA..HeadSHA`；Review 不得更改当前主工作区或其他分支。
 - `ExecutionStatus` 与 `Verdict` 分离的结构化 `CodingReviewResult` 事件头。
 
 ### 3.4 候选版本角色增量
@@ -120,7 +120,7 @@ InvocationID
 - Merge Reviewer 只审核合并资格，Merge Executor 只执行已经批准的精确合并；审核和执行默认分离。
 - 载体分离（WorkBuddy 写 / Codex 审）不等于视角独立；不同载体仍可能共享上游上下文与判断，必须保留独立的审核目标与风险模型，不得仅凭载体不同即视为独立审核。
 
-## 5.1 Git 权限
+### 5.1 Git 权限
 
 - Implementer 与 Rework Implementer 只能在自己的任务分支创建 commit；
 - 普通开发角色不得直接 commit 或 merge 到迭代开发分支、长期集成分支、稳定分支或主分支；
@@ -194,7 +194,7 @@ ProducedAt, ConsumedAt, LastEventFingerprint
 
 任何必填项缺失或冲突未解决时不得派发。
 
-### 8.2 状态生产、消费与周期巡检
+### 8.2 状态生产、消费与对账
 
 标准调度循环：
 
@@ -239,7 +239,7 @@ UI 显示 idle/completed、Git HEAD 未变化或读取接口暂时无结果，�
 - [ ] 外部操作边界明确；
 - [ ] Review 视角未被开发上下文提前限制；
 - [ ] 停止条件明确；
-- [ ] 已通过派发前清单，并配置文档状态生产/消费与周期巡检；
+- [ ] 已通过派发前清单，并配置文档状态生产/消费与对账；
 - [ ] 已配置唯一台账（`LedgerLocation`）、幂等 `DispatchKey`、单实例幂等去重（无协调租约锁）、暂停、三级恢复和适用 Canary；
 - [ ] 指定执行机制（WorkBuddy/Codex/Human）不被未经授权替代（禁止伪独立自审）；
 - [ ] 未绑定不必要的具体模型、业务或工具。
@@ -264,3 +264,4 @@ UI 显示 idle/completed、Git HEAD 未变化或读取接口暂时无结果，�
 | V2.5 | 2026-08-20 | Hermes | 审阅修订：§2 角色列表收敛为 6 种核心角色，扩展角色并入映射说明 |
 | V2.5（待审核） | 2026-08-20 | Hermes | §8.2 同步 IntegrationVerified 执行主体 = Integrator（或独立 IntegrationValidationTask），不依赖外部 CI webhook（与 09 §6.1 / 08 §3.4 一致） |
 | V2.5 定稿 | 2026-08-20 | WorkBuddy | 评审通过，标记为 V2.5 正式基线 |
+| V2.5 勘误 | 2026-08-21 | WorkBuddy | 修正笔误「改审」→「更改」；§5.1 标题层级 ## → ###；§8.2 术语统一「周期巡检」→「对账」 |

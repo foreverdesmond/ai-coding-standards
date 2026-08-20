@@ -4,7 +4,7 @@
 > 规范状态：已审核通过（V2.5 定稿基线）
 > 适用范围：由 Hermes 常驻总调度主导、WorkBuddy / Codex / Human 平行协作执行的开发迭代
 > 前身：`09-调度控制平面与运行时台账规范`（V2.4，Codex 线程当总调度）
-> 修订日期：2026-08-20
+> 修订日期：2026-08-21
 > 依赖底座：《Hermes能力边界清单》（实测能力）、《Hermes流程与边界决议》（边界决策）
 > 作者：WorkBuddy（重写）
 > 审核人：Richy（已审核）
@@ -291,7 +291,7 @@ BlockerType: None / RepositoryEnvironment / ToolRuntime / Authorization
 - Reviewer 基于 diff + L0 证据审查，只对关键路径冒烟，**不重跑全套单测**；
 - Level 1 + 回归由 Validator 仅在 merge 前跑全量一次。
 
-## 11. cron 对账（周期巡检）
+## 11. cron 对账
 
 Hermes cron（约 1 分钟）对账每轮：
 
@@ -310,7 +310,7 @@ cron 对账在每轮额外检查长期无进展的任务，避免静默卡死（
 
 - 任务持续处于 `ContextGenerationPending` / `Ready` / `InProgress` / `PendingConsumption` 超过 **2 个 cron 周期**（约 2 分钟）无任何状态推进或读取活动 → 记录停滞并告警；仍无进展超过 **4 个 cron 周期** → 升级项目负责人（Richy）。
 - 任务处于 `Integrated` 但缺少 `IntegrationVerified` 回写（即无对应 CI/集成验证回写信号）超过 **2 个 cron 周期** → 记录停滞并告警；超过 **4 个 cron 周期** → 升级 Richy，由 Hermes 重派 `IntegrationValidationTask` 或人工介入。
-- 依赖环检测：任务因上游长期 `Ready`/`InProgress` 未满足而无法推进时，cron 在停滞升级时一并报告依赖阻塞图，便于定位环依赖（环依赖的拒登记规则见 `04` §5.2）。
+- 依赖环检测：任务因上游长期 `Ready`/`InProgress` 未满足而无法推进时，cron 在停滞升级时一并报告依赖阻塞图，便于定位环依赖（环依赖的拒绝登记规则见 `04` §5.2）。
 
 没有以下最小证据时不得报告"无变化"：
 
@@ -362,7 +362,7 @@ ControlPlaneErrors
 - **灾难**：必须等待项目负责人（Richy）介入批准 `RecoveryApproved` 后才退出 `RecoveryOnly`；
 - 每次升级均记入恢复报告与台账，避免静默无限循环。
 
-### 13.1 冷恢复步骤
+### 13.2 冷恢复步骤
 
 1. 读台账；其缺失或损坏时，从 `CanonicalTaskDocumentPath` 最后一个结构有效的 `TASK-STATE-EXCHANGE` 快照恢复计划图、角色、依赖、基线、稳定状态和未消费记录；
 2. 扫描 Git 分支、worktree、提交、祖先关系和迭代分支包含关系；
@@ -375,7 +375,7 @@ ControlPlaneErrors
 9. 写回台账并保存旧状态备份；在稳定门禁点把最新状态复制为开发任务文档持久快照；
 10. 输出恢复报告；冷恢复**自动校验通过即完成（无需项目负责人介入）**，校验通过即退出 `RecoveryOnly` 恢复调度。
 
-### 13.2 最大安全状态
+### 13.3 最大安全状态
 
 - 仅发现任务分支 commit：`CodePresence=PresentInTaskBranch`、`TaskState=InProgress`（已有状态）；
 - Implementer final 与 Git 均有效：最多恢复为 `Submitted`；
@@ -455,3 +455,4 @@ Canary 任一场景失败时进入 `CanaryFailed` 状态，并按下述路径闭
 | V2.5（待审核） | 2026-08-20 | Hermes | 审阅修订：台账绝不可提交至Git(防循环引用/自包含哈希)；冷恢复自动校验通过即完成无需Richy；EvidenceIncomplete改为已有状态InProgress |
 | V2.5（待审核） | 2026-08-20 | Hermes | 补流程缺口7条：§3.2增 ContextGenerationPending；§6.1增 CI/集成验证回写 + 候选冻结 human-gated 事件；§7.2/§8载体不可用连续3次升级 Richy；§11.1停滞检测（含 IntegrationVerified 超时升级）；§13.1恢复升级阈值（热→冷→灾难，热3次）；§14.1 CanaryFailed 状态+处置路径+连续3次告警 Richy |
 | V2.5 定稿 | 2026-08-20 | WorkBuddy | 评审通过，标记为 V2.5 正式基线 |
+| V2.5 勘误 | 2026-08-21 | WorkBuddy | 修正「拒登记」→「拒绝登记」；§13 恢复协议小节重号改正（13.1/13.2/13.3）；§11 标题统一为「cron 对账」 |

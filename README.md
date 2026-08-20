@@ -1,6 +1,6 @@
 # AI 辅助与多 Agent 软件开发规范
 
-> 一套让没有软件工程背景的人，也能用一支 AI 团队，从零造出**质量可控**的软件产品的开发规范。
+<div align="center">
 
 **让 AI 辅助开发从“能写代码”走向“可控地交付软件”**
 
@@ -9,7 +9,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 [![X: @Richyisaflower](https://img.shields.io/badge/X-@Richyisaflower-black?logo=x)](https://x.com/Richyisaflower)
 
----
+</div>
 
 ## 这是什么
 

@@ -119,7 +119,7 @@ body: { prompt, cwd, model, modelProvider, sandbox, approval }
 
 ---
 
-## V3.0 附录：沙箱与特权操作边界更新（2026-08-24）
+## V3.0 附录（修订：Tiffany-Dev，2026-08-24）：沙箱与特权操作边界更新（2026-08-24）
 
 1. **所有 Codex 派发统一 `danger-full-access`**（含 Review/Validator）：V2.5 只读沙箱实测
    无法编译运行测试；权限放大以「代码不可变约束」对冲（09 §7.3）。

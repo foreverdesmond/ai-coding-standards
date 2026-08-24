@@ -3,7 +3,7 @@
 > 规范版本：V3.0-draft（基于 V2.5，修订提案 3.0 分支 V3.0-proposal.md v5）
 > 规范状态：修改中（V2.5 为上一已审核基线）
 > 适用范围：使用 Agent 执行开发、Review、测试、调度或合并审核
-> 作者：WorkBuddy（受 Hermes 总调度委派）
+> 作者：Tiffany-Dev（V3.0 修订；初版=WorkBuddy）
 > 修订日期：2026-08-24
 > 审核人：Richy（已审核）
 

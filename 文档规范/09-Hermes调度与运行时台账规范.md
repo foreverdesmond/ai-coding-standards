@@ -276,7 +276,9 @@ Hermes 读台账
 
 **最大自动尝试次数（防无限循环）**：每次派发必须记录 `MaxAutomaticAttempts`（默认 3、不得超过 3，
 含首次），计数按 `TaskID + Stage + TargetIdentity` 持久化于运行台账——替换执行实例或调度权
-移交均不得重置。达上限后任务转 `NeedsAttention` 并升级项目负责人人工处置，禁止自动无限重派。
+移交均不得重置。达上限后：`CarrierStatus = NeedsAttention`（载体需人工介入）、
+`TaskState = Blocked`、`BlockerType = AutomaticAttemptsExhausted`，并升级项目负责人
+人工处置——停止自动重派，且不跨状态域赋值。
 
 ## 9. 证据归属与冲突处理
 
@@ -548,3 +550,5 @@ Canary 任一场景失败时进入 `CanaryFailed` 状态，并按下述路径闭
 | V3.0-draft-3 | 2026-08-24 | Hermes | 三轮收口（Codex 二审）：①§12.3 回执顺序定稿——旧 owner 于换主前写入 TransferID/停止确认/尾部 Signal/StateRevision，换主后禁止再写入（消除与 §12.2 冲突）；②§5.3 任务级 schema 增补 PolicyVersion/PolicyArtifactDigest/DispatchedCoordinatorEpoch（迭代级仅存当前 owner），支持历史派发载体依据审计；③§5.1 维护者表述改「当前 CoordinatorEpoch owner」；④§8 零业务结论纳入执行故障 |
 
 | V3.0-draft-4 | 2026-08-24 | Hermes | 四轮收口（Codex 三审）：①04 §8 台账段落不再重复 schema——改为引用 09 §5 运行时台账契约，维护者改「当前 CoordinatorEpoch owner」；②04 任务模板 Status 拆为 TaskState/CarrierStatus/VerificationStatus 三字段（消除状态混用，VerificationStatus 含 VerifiedWithWaivers）；③04 Reviewer「只读角色」改「候选内容不可变」（danger-full-access 下可构建测试写证据）；④能力清单「由 Hermes 维护」改「由当前 CoordinatorEpoch owner 维护」 |
+
+| V3.0-draft-5 | 2026-08-24 | Tiffany-Dev | 五轮收口（Codex 四审）：§8 达 MaxAutomaticAttempts 上限后的处置改为分域赋值——CarrierStatus=NeedsAttention / TaskState=Blocked / BlockerType=AutomaticAttemptsExhausted + 升级 Richy（修正原"任务转 NeedsAttention"跨状态域赋值）|

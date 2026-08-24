@@ -68,7 +68,7 @@ DispatchMode: EventDriven + CronFallback
 8. 只有 `Validated` 可以触发正常状态转换；
 9. Hermes 在台账中先写消费确认和汇总状态，再登记下一次 Dispatch，最后递增 `StateRevision`。
 
-输出缺少结构化协议头、或**有完成回复但零业务结论/缺目标身份或必填结果字段**时：立即标记 `ExecutionFailure / PendingVerification`，不得推进业务状态；同一执行载体补发缺失字段**至多一次**，超限或载体不可用即保留证据并升级。每次派发按 `TaskID+Stage+TargetIdentity` 记录 `MaxAutomaticAttempts`（默认 3 上限 3，持久化于台账，换主/换实例不重置），达上限转 `NeedsAttention` 升级 Richy，禁止无限重派。新 `HeadSHA` 自动使旧 Review `Superseded`。
+输出缺少结构化协议头、或**有完成回复但零业务结论/缺目标身份或必填结果字段**时：立即标记 `ExecutionFailure / PendingVerification`，不得推进业务状态；同一执行载体补发缺失字段**至多一次**，超限或载体不可用即保留证据并升级。每次派发按 `TaskID+Stage+TargetIdentity` 记录 `MaxAutomaticAttempts`（默认 3 上限 3，持久化于台账，换主/换实例不重置）；达上限后：CarrierStatus=NeedsAttention、TaskState=Blocked、BlockerType=AutomaticAttemptsExhausted，升级 Richy 处置，禁止无限重派。新 `HeadSHA` 自动使旧 Review `Superseded`。
 
 ## 5. 暂停与恢复
 

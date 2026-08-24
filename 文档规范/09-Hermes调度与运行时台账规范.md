@@ -414,7 +414,7 @@ ControlPlaneErrors
 
 | 移交类型 | Richy 事前确认 | 触发约束 | 事后义务 |
 |---|---|---|---|
-| 正常移交（双向确认） | **无需逐次确认** | 只能由 Richy 明确指令触发（如"继续调度""暂停""冻结"）；Agent 不得基于自身判断发起移交 | 新 owner 在下一份简报中报告 TransferID、换主原因、新旧 Epoch，供事后审查；发现异常可再换主回滚（Epoch+1） |
+| 正常移交（双向确认） | **无需逐次确认**；Richy 用自然语言即可，无须模板化指令 | 触发语义必须**明确表达换主意图**——即包含目标 owner 的移交指令（如「把调度交给当前交互会话」）。⚠️ 「继续调度」＝当前 owner 继续；「暂停/冻结」＝仅改调度状态；二者均**不构成换主**。存在多个可能接管者而指令未指明时，保持当前 owner 或向 Richy 追问，不得擅自换主。换主意图确认后，TransferID/新旧 owner/Epoch 由 Hermes 生成并落账（系统内部记录，Richy 无须填写） | 新 owner 在下一份简报中报告 TransferID、换主原因、新旧 Epoch，供事后审查；发现异常可再换主回滚（Epoch+1） |
 | 失联恢复接管 | **必须显式授权**（上文条款） | 超过 `LostOwnerTimeout` 无心跳/tick | 授权记录入台账，作为替代旧 owner 回执的依据 |
 
 **Fencing 执行规则**：
@@ -561,3 +561,5 @@ Canary 任一场景失败时进入 `CanaryFailed` 状态，并按下述路径闭
 | V3.0-draft-5 | 2026-08-24 | Tiffany-Dev | 五轮收口（Codex 四审）：§8 达 MaxAutomaticAttempts 上限后的处置改为分域赋值——CarrierStatus=NeedsAttention / TaskState=Blocked / BlockerType=AutomaticAttemptsExhausted + 升级 Richy（修正原"任务转 NeedsAttention"跨状态域赋值）|
 
 | V3.0-draft-6 | 2026-08-24 | Tiffany-Dev | 六轮收口（DEC-V3.0-001 关闭最后一个开放决策）：§12.3 新增 Richy 确认要求表——正常移交无需逐次事前确认，但只能由 Richy 明确指令触发且完成后须在简报中报告 TransferID/原因/新旧 Epoch（供事后审查与回滚）；失联恢复维持 Richy 显式授权。依据：V5 实测调度权事件 10 次中 7 次由 Richy 发起/纠正，逐次确认不增加安全只增加延迟与确认疲劳 |
+
+| V3.0-draft-7 | 2026-08-24 | Tiffany-Dev | 七轮收口（Codex 五审精度说明）：§12.3 DEC-V3.0-001 明确「自然语言指令可触发，但必须表达换主意图」——继续调度=当前owner继续、暂停/冻结=仅改状态、均不自动换主；多候选歧义时保持现状或追问；TransferID/owner/Epoch 由 Hermes 内部生成，不要求 Richy 模板化输入 |

@@ -1,10 +1,10 @@
 # 子任务与 Agent 委派及提示词规范
 
-> 规范版本：V2.5
-> 规范状态：已审核通过（V2.5 定稿基线）
+> 规范版本：V3.0-draft（基于 V2.5，修订提案 3.0 分支 V3.0-proposal.md v5）
+> 规范状态：修改中（V2.5 为上一已审核基线）
 > 适用范围：使用 Agent 执行开发、Review、测试、调度或合并审核
 > 作者：WorkBuddy（受 Hermes 总调度委派）
-> 修订日期：2026-08-21
+> 修订日期：2026-08-24
 > 审核人：Richy（已审核）
 
 ## 1. 单一职责
@@ -21,7 +21,7 @@ V2.5 收敛为 6 种核心角色（详见 README §4），每个任务按需启�
 |---|---|---|
 | Coordinator（总调度） | 派发、巡检、判 gate | Hermes 常驻服务承担，不做子 Agent 实操 |
 | Implementer（开发） | 首次开发 + 返工 + L0 单测 | 只在自己 feature 分支；不批准自己 |
-| Reviewer（审核） | 审核开发成果（diff/commit） | 基于 diff + L0 证据审；只读，不 merge |
+| Reviewer（审核） | 审核开发成果（diff/commit） | 基于 diff + L0 证据审；代码不可变约束（09 §7.3）：danger-full-access 下在隔离 detached 验证工作区审查，不改业务源码、不 commit 候选、不 merge |
 | Integrator（集成） | 合并 feature → iteration | 只合并已 approved 的精确 commit；不自己审自己的 merge |
 | Validator（测试验证） | 合并后全量测试（L1+回归） | 在集成分支跑全量；只读/测试环境；不 merge |
 | Doc/Design Reviewer（文档/设计审核） | 文档审核 + 设计 + 工作包/上下文 | 纯文档工作归其；低风险设计不审、高风险同角色他审 |
@@ -35,13 +35,15 @@ V2.5 收敛为 6 种核心角色（详见 README §4），每个任务按需启�
 角色和执行机制是两个不同概念。项目必须为每次派发记录：
 
 ```text
-ExpectedExecutionKind: WorkBuddy / Codex / Human / ApprovedEquivalent
+ExpectedExecutionKind: <由载体策略制品当前版本决定>
 ExpectedModel
 Role
 InvocationID
+PolicyVersion + PolicyArtifactDigest
 ```
 
-- 执行载体（WorkBuddy / Codex / Human）在派发时显式指定；Hermes 按 `09-Hermes调度与运行时台账规范` 派发并绑定 `ExecutionRef`；
+- `ExpectedExecutionKind` 不再是静态枚举：**可用载体与分配规则由「载体策略制品」的当前版本唯一定义**（见 09 §12.4）；派发时显式指定并经派发前置门禁校验（fail-closed），Hermes 按 `09-Hermes调度与运行时台账规范` 派发并绑定 `ExecutionRef`；
+- 每次派发的台账记录附 PolicyVersion 与 PolicyArtifactDigest，供事后审计"当时为何选该载体"；
 - 派发返回临时请求标识表示 `Provisioning`，不是失败；
 - 派发失败或载体不可用时登记 `ControlPlaneError` 并停止，不得改用其他机制未经授权替代（禁止伪独立自审）；
 - 只有项目负责人事先批准 `ApprovedEquivalent` 时才允许等价执行机制；
@@ -124,7 +126,8 @@ InvocationID
 
 - Implementer 与 Rework Implementer 只能在自己的任务分支创建 commit；
 - 普通开发角色不得直接 commit 或 merge 到迭代开发分支、长期集成分支、稳定分支或主分支；
-- Reviewer、Validator 和 Coordinator 默认只读，不得通过修改代码形成通过结论；
+- Reviewer 与 Validator 受**代码不可变约束**：统一使用 danger-full-access 以获得构建与测试能力，但不得修改受跟踪业务源码、不得 commit 候选、不得 merge；Review 必须在隔离的、以精确候选 commit 为基线的 detached 验证工作区执行，并做前后 HEAD/tree 双向对账——一旦变化，本次结论无效（详见 09 §7.3）；
+- Coordinator 受调度权 Epoch 约束与派发前置门禁约束（09 §12.3/§12.4）；
 - Iteration Integrator 只能合并指定且已 `TaskAccepted` 的提交到迭代开发分支；
 - Main Merge Executor 只能在 `MergeApproved` 和项目负责人明确授权后合并准确候选到主分支；
 - 发生需要修改实现的冲突时，合并执行者停止并返回开发/返工闭环。
@@ -265,3 +268,5 @@ UI 显示 idle/completed、Git HEAD 未变化或读取接口暂时无结果，�
 | V2.5（待审核） | 2026-08-20 | Hermes | §8.2 同步 IntegrationVerified 执行主体 = Integrator（或独立 IntegrationValidationTask），不依赖外部 CI webhook（与 09 §6.1 / 08 §3.4 一致） |
 | V2.5 定稿 | 2026-08-20 | WorkBuddy | 评审通过，标记为 V2.5 正式基线 |
 | V2.5 勘误 | 2026-08-21 | WorkBuddy | 修正笔误「改审」→「更改」；§5.1 标题层级 ## → ###；§8.2 术语统一「周期巡检」→「对账」 |
+
+| V3.0-draft | 2026-08-24 | Hermes | V3.0 修订（提案 v5）：①§2 角色表 Reviewer 行、§5.1 Git 权限：「只读」改为「代码不可变约束」——统一 danger-full-access（构建/测试需写权限），隔离 detached 验证工作区 + 前后 HEAD/tree 双向对账；Coordinator 补 Epoch 约束与门禁约束；②§2.1 ExpectedExecutionKind 静态枚举改为引用「载体策略制品」当前版本，派发记录增补 PolicyVersion+PolicyArtifactDigest |

@@ -1,10 +1,10 @@
 # 总调度 Agent（Hermes 常驻调度配置）
 
-> 规范版本：V2.5
-> 文档状态：已审核通过（V2.5 定稿基线）
+> 规范版本：V3.0-draft（基于 V2.5；修订提案 3.0 分支）
+> 文档状态：修改中（V2.5 为上一已审核基线）
 > 作者：WorkBuddy（受 Hermes 总调度委派）
 > 创建日期：2026-08-20
-> 最后更新：2026-08-20
+> 最后更新：2026-08-24
 > 审核人：Richy（已审核）
 
 目标：Hermes 以**常驻服务**身份，以台账（`LedgerLocation`）为唯一实时任务状态真源，依据 `09-Hermes调度与运行时台账规范` 维护派发、Review、返工、依赖、集成、暂停与恢复，直至批准的停止条件满足。不得常态扫描全部执行载体或依赖跨任务 API 事件发现结果。
@@ -67,7 +67,7 @@ DispatchMode: EventDriven + CronFallback
 8. 只有 `Validated` 可以触发正常状态转换；
 9. Hermes 在台账中先写消费确认和汇总状态，再登记下一次 Dispatch，最后递增 `StateRevision`。
 
-输出缺少协议头但内容可能有效时，优先要求同一执行载体只补发缺失字段，不创建新任务。新 `HeadSHA` 自动使旧 Review `Superseded`。
+输出缺少结构化协议头、或**有完成回复但零业务结论/缺目标身份或必填结果字段**时：立即标记 `ExecutionFailure / PendingVerification`，不得推进业务状态；同一执行载体补发缺失字段**至多一次**，超限或载体不可用即保留证据并升级。每次派发按 `TaskID+Stage+TargetIdentity` 记录 `MaxAutomaticAttempts`（默认 3 上限 3，持久化于台账，换主/换实例不重置），达上限转 `NeedsAttention` 升级 Richy，禁止无限重派。新 `HeadSHA` 自动使旧 Review `Superseded`。
 
 ## 5. 暂停与恢复
 
@@ -137,3 +137,5 @@ NextActionOrInspection:
 | V2.5 | 2026-08-20 | WorkBuddy | 重写为 Hermes 常驻调度配置：台账 + 事件/cron 双通道 + 单实例幂等；删共享 JSON/租约/StateRevision 轮询 |
 | V2.5 | 2026-08-20 | Hermes | 审阅修订：冷恢复自动完成无需 Richy（与 09 对齐） |
 | V2.5 定稿 | 2026-08-20 | WorkBuddy | 评审通过，标记为 V2.5 正式基线 |
+
+| V3.0-draft | 2026-08-24 | Hermes | V3.0 修订：并发模型改 CoordinatorEpoch/FencingToken（原子条件换主+失联授权接管）；执行故障语义对齐 09 §8（零业务结论亦属执行故障；补发≤1 次；MaxAutomaticAttempts≤3 持久化计数 + NeedsAttention 出口）；派发注入 PolicyVersion/PolicyArtifactDigest/CoordinatorEpoch 并过门禁 |

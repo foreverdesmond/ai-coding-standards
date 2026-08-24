@@ -135,8 +135,13 @@ MergeTarget
 SchemaVersion, ProtocolVersion, IterationID, HermesInstanceRef,
 CoordinatorMode, Paused, CodeBaseSHA, RequirementsBaselineRef,
 DesignBaselineRef, TaskDocumentBaselineRef, CanonicalTaskDocumentPath,
-LedgerLocation, StateRevision, ConsumedRevision, UpdatedAt
+LedgerLocation, StateRevision, ConsumedRevision, UpdatedAt,
+CoordinatorEpoch{Epoch, Owner, StateRevisionAtTakeover, LostOwnerTimeout},
+PolicyVersion, PolicyArtifactDigest
 ```
+
+V3.0 新增必填：`CoordinatorEpoch`（顶层对象，§12.3 调度权唯一真源）、
+`PolicyVersion` 与 `PolicyArtifactDigest`（当前生效载体策略制品，§12.4）。
 
 ### 5.3 任务级最小字段
 
@@ -146,8 +151,12 @@ ExpectedExecutionKind, ExpectedModel, ActualModel, ModelProvider, Sandbox,
 TaskBranch, WorktreePath, CodeBaseSHA, HeadSHA,
 ExecutionRef, CarrierStatus, TaskState, EvidenceState,
 SignalRevision, SignalState, ProducedAt, ConsumedAt, ConsumedBy,
-LastEventFingerprint, BlockerType, RecoveryConfidence, NextAction
+LastEventFingerprint, BlockerType, RecoveryConfidence, NextAction,
+MaxAutomaticAttempts, AutomaticAttemptsCount, ExecutionFailureType
 ```
+
+V3.0 新增必填：`MaxAutomaticAttempts`（默认 3、上限 3）、`AutomaticAttemptsCount`
+（持久化计数，换主/换实例不重置）、`ExecutionFailureType`（执行故障分类，§8）。
 
 `ExpectedModel` 是项目要求；无法验证 `ActualModel` 时记录 `Unknown`，不得自行宣称模型匹配。
 
@@ -253,7 +262,9 @@ Hermes 读台账
 跨任务读取失败时保留 `PendingConsumption`，记录控制面错误并通知；下一轮仍只处理该待消费记录，不得退化为扫描所有执行载体，也不得把读取失败改写成业务 `Blocked`。同一待消费记录连续读取失败达到 **3 次**仍无法处理时，按 §7.2 载体不可用升级阈值告警 Richy。
 
 **执行故障判定与消费禁令（V3.0，取代本节先前"仅要求补发"的表述）**：
-`completed` 但 final 缺少结构化协议头时，立即标记 `ExecutionFailure / PendingVerification`，
+`completed` 但 final **缺少结构化协议头、或缺少该角色模板要求的实质业务结论/目标身份/
+必填结果字段（零业务结论）**时，均视为执行故障：立即标记 `ExecutionFailure / PendingVerification`，
+不得仅因存在文本就消费为完成。
 不得推进业务状态、不得作为 Review 结论消费。允许同一执行载体补发"仅协议头/缺失字段"
 **至多一次**；补发仍缺失或载体不可用时保留原始内容进入 `PendingVerification` 并上报项目负责人。
 
@@ -524,3 +535,4 @@ Canary 任一场景失败时进入 `CanaryFailed` 状态，并按下述路径闭
 | V2.5 勘误 | 2026-08-21 | WorkBuddy | 修正「拒登记」→「拒绝登记」；§13 恢复协议小节重号改正（13.1/13.2/13.3）；§11 标题统一为「cron 对账」 |
 
 | V3.0-draft | 2026-08-24 | Hermes | V3.0 修订（提案 3.0 分支 V3.0-proposal.md v5）：①§2.7/§12 并发模型由「单机单实例不设锁」改为 CoordinatorEpoch/FencingToken + 原子条件换主 + 失联超时恢复（LostOwnerTimeout 默认 2 调度周期）+ 调度权移交协议（TransferID 双确认）；②新增 §12.4 载体策略与变更控制（载体策略制品唯一真源，契约/schema 变更走规范审核、实例内容变更走受控运行时变更；派发强制门禁 fail-closed）；③§6.2 RecordID 全局唯一（ULID/UUID，冲突冻结+映射审计）；④§8 执行故障升格：缺结构化头=ExecutionFailure/PendingVerification 禁止消费，补发≤1 次；MaxAutomaticAttempts≤3 持久化计数防无限重派；⑤§7.3 所有 Codex 派发统一 danger-full-access + Reviewer「代码不可变」约束（隔离 detached 验证工作区+前后 HEAD/tree 对账） |
+| V3.0-draft-2 | 2026-08-24 | Hermes | 二轮残留清零：§12.3 移交回执顺序修正（旧 owner 换主前写回执，消除 §12.2 副作用拒绝冲突）；§5.2/5.3 最小 schema 增补 CoordinatorEpoch/PolicyVersion/PolicyArtifactDigest/MaxAutomaticAttempts/AutomaticAttemptsCount/ExecutionFailureType 必填字段；§8 执行故障扩展「零业务结论/缺目标身份或必填字段」情形（G4 闭环）|

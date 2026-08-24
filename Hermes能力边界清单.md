@@ -1,10 +1,10 @@
 # Hermes 能力边界清单
 
-> 规范版本：**V2.5（草案）**
-> 文档状态：**已审核通过（V2.5 定稿基线）**
+> 规范版本：**V3.0-draft（基于 V2.5；修订提案 3.0 分支）**
+> 文档状态：**修改中（V2.5 为上一已审核基线）**
 > 作者：Hermes（Tiffany）
 > 创建日期：2026-08-20
-> 最后更新：2026-08-20
+> 最后更新：2026-08-24
 > 审核人：Richy（已审核）
 > 修订记录：见文末
 > 定位：V2.5 升级计划中的 **P0 前提**。三份大纲、审阅报告、上线计划都假设 Hermes 具备某些能力，本清单把 **Hermes 实际能力** 实测确认并写死，作为 00-公共基座重写、09-台账规范重写、派发机制实现的依赖底座。
@@ -16,7 +16,7 @@
 | 项 | 确认结果 |
 |---|---|
 | 部署形态 | ~~**单机单实例**~~ → V3.0：多 driver 可竞争调度权；由 CoordinatorEpoch FencingToken 唯一持有，原子条件换主（见 09 §12.3 与文末 V3.0 附录） |
-| 推论 | 无多 Coordinator 竞争 → **无需协调租约锁**；幂等由 `DispatchKey` 去重保证 |
+| 推论 | ~~无多 Coordinator 竞争 → 无需协调租约锁~~ → V3.0：多 driver 竞争调度权，由 CoordinatorEpoch FencingToken 仲裁；幂等由 DispatchKey 去重 + Epoch 校验保证 |
 | 常驻性 | **常驻服务**（非临时线程），持续运行，天然是"总调度" |
 
 ## 2. 状态持久化 / 台账载体
@@ -130,3 +130,5 @@ body: { prompt, cwd, model, modelProvider, sandbox, approval }
 4. **特权操作留痕**：systemctl/at/crontab 变更等须先获 Richy 授权并写 OPS-AUDIT 记录。
    （源起：2026-08-22 网关越权事故，详见 incidents/2026-08-22-gateway-bypass/）
 5. 共享技能 `privileged-operations-governance` 为全 profile 强制原则。
+
+| V3.0-draft | 2026-08-24 | Tiffany-Dev | 部署形态改多 driver + CoordinatorEpoch FencingToken（原单机单实例推论同步作废）；统一 danger-full-access（含 Review，代码不可变约束）；新增特权操作边界（跨 profile 隔离/拦截转人工/OPS-AUDIT）。见文末 V3.0 附录 |

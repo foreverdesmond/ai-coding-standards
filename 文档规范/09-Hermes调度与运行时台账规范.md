@@ -124,7 +124,7 @@ MergeTarget
 
 ### 5.1 唯一状态真源
 
-- **Hermes 台账**（`LedgerLocation`，本地 JSON 状态文件 + 可选 SQLite，**项目目录内、不进 Git**）是活动迭代中任务运行状态的**唯一实时真源**，由 Hermes 单实例维护。**台账绝不提交至 Git——即便执行载体有 ```danger-full-access``` 提交权限，任何 add/commit 也不得包含台账文件**（台账随开发变动会产生与提交的循环引用/自包含哈希，必须与版本库隔离）。
+- **Hermes 台账**（`LedgerLocation`，本地 JSON 状态文件 + 可选 SQLite，**项目目录内、不进 Git**）是活动迭代中任务运行状态的**唯一实时真源**，由当前 CoordinatorEpoch owner 维护。**台账绝不提交至 Git——即便执行载体有 ```danger-full-access``` 提交权限，任何 add/commit 也不得包含台账文件**（台账随开发变动会产生与提交的循环引用/自包含哈希，必须与版本库隔离）。
 - **开发任务文档**（`CanonicalTaskDocumentPath`）中的 `TASK-STATE-EXCHANGE` 块是 **Git 持久快照**，用于跨重启/灾难恢复。
 - 执行 Agent **不直接写台账**；通过载体通道回报结构化结果，由 Hermes 消费后写入台账（见 §8）。
 - 台账只存定位与验证所需的摘要、SHA、Verdict、`ExecutionRef` 与下一动作；长日志、完整 diff、完整 final 不写入台账，落入派生证据目录。
@@ -152,11 +152,17 @@ TaskBranch, WorktreePath, CodeBaseSHA, HeadSHA,
 ExecutionRef, CarrierStatus, TaskState, EvidenceState,
 SignalRevision, SignalState, ProducedAt, ConsumedAt, ConsumedBy,
 LastEventFingerprint, BlockerType, RecoveryConfidence, NextAction,
-MaxAutomaticAttempts, AutomaticAttemptsCount, ExecutionFailureType
+MaxAutomaticAttempts, AutomaticAttemptsCount, ExecutionFailureType,
+PolicyVersion, PolicyArtifactDigest, DispatchedCoordinatorEpoch
 ```
 
-V3.0 新增必填：`MaxAutomaticAttempts`（默认 3、上限 3）、`AutomaticAttemptsCount`
-（持久化计数，换主/换实例不重置）、`ExecutionFailureType`（执行故障分类，§8）。
+V3.0 新增必填：
+
+- **任务/阶段级**：`PolicyVersion` + `PolicyArtifactDigest`——一次迭代内策略可能变更，
+  只有派发时刻的策略快照才能证明"该次为何选该载体"；`DispatchedCoordinatorEpoch`——
+  派发发生时的调度权纪元（迭代级仅保留当前 owner 状态）；
+- `MaxAutomaticAttempts`（默认 3、上限 3）、`AutomaticAttemptsCount`
+  （持久化计数，换主/换实例不重置）、`ExecutionFailureType`（执行故障分类，§8）。
 
 `ExpectedModel` 是项目要求；无法验证 `ActualModel` 时记录 `Unknown`，不得自行宣称模型匹配。
 
@@ -421,8 +427,10 @@ ControlPlaneErrors
 
 **派发强制门禁**：每次派发前必须通过派发前置门禁实现校验（fail-closed），检查项至少包括：
 意图字段完整、RecordID 全局唯一（§6.2）、载体可用且匹配策略制品、单线程约束、
-调度暂停闸、依赖满足、候选 SHA origin 可达；每次派发的台账记录附 PolicyVersion 与
-PolicyArtifactDigest。门禁 BLOCKED 即停止并上报项目负责人，禁止绕过。
+调度暂停闸、依赖满足、候选 SHA origin 可达。**策略快照记录在任务/阶段级**（§5.3）：
+每次派发的任务记录附当时的 PolicyVersion / PolicyArtifactDigest /
+DispatchedCoordinatorEpoch——迭代级字段只反映当前状态，无法回答历史派发的载体依据。
+门禁 BLOCKED 即停止并上报项目负责人，禁止绕过。
 
 ## 13. 恢复协议（三级）
 
@@ -536,3 +544,4 @@ Canary 任一场景失败时进入 `CanaryFailed` 状态，并按下述路径闭
 
 | V3.0-draft | 2026-08-24 | Hermes | V3.0 修订（提案 3.0 分支 V3.0-proposal.md v5）：①§2.7/§12 并发模型由「单机单实例不设锁」改为 CoordinatorEpoch/FencingToken + 原子条件换主 + 失联超时恢复（LostOwnerTimeout 默认 2 调度周期）+ 调度权移交协议（TransferID 双确认）；②新增 §12.4 载体策略与变更控制（载体策略制品唯一真源，契约/schema 变更走规范审核、实例内容变更走受控运行时变更；派发强制门禁 fail-closed）；③§6.2 RecordID 全局唯一（ULID/UUID，冲突冻结+映射审计）；④§8 执行故障升格：缺结构化头=ExecutionFailure/PendingVerification 禁止消费，补发≤1 次；MaxAutomaticAttempts≤3 持久化计数防无限重派；⑤§7.3 所有 Codex 派发统一 danger-full-access + Reviewer「代码不可变」约束（隔离 detached 验证工作区+前后 HEAD/tree 对账） |
 | V3.0-draft-2 | 2026-08-24 | Hermes | 二轮残留清零：§12.3 移交回执顺序修正（旧 owner 换主前写回执，消除 §12.2 副作用拒绝冲突）；§5.2/5.3 最小 schema 增补 CoordinatorEpoch/PolicyVersion/PolicyArtifactDigest/MaxAutomaticAttempts/AutomaticAttemptsCount/ExecutionFailureType 必填字段；§8 执行故障扩展「零业务结论/缺目标身份或必填字段」情形（G4 闭环）|
+| V3.0-draft-3 | 2026-08-24 | Hermes | 三轮收口（Codex 二审）：①§12.3 回执顺序定稿——旧 owner 于换主前写入 TransferID/停止确认/尾部 Signal/StateRevision，换主后禁止再写入（消除与 §12.2 冲突）；②§5.3 任务级 schema 增补 PolicyVersion/PolicyArtifactDigest/DispatchedCoordinatorEpoch（迭代级仅存当前 owner），支持历史派发载体依据审计；③§5.1 维护者表述改「当前 CoordinatorEpoch owner」；④§8 零业务结论纳入执行故障 |

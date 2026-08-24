@@ -1,10 +1,10 @@
 # AGENTS.md — Context L1 标准入口
 
-> 规范版本：V2.5
-> 文档状态：已审核通过（V2.5 定稿基线）
+> 规范版本：V3.0-draft（基于 V2.5，修订提案 3.0 分支 V3.0-proposal.md v5）
+> 文档状态：修改中（V2.5 为上一已审核基线）
 > 作者：WorkBuddy（受 Hermes 总调度委派）
 > 创建日期：2026-08-20
-> 最后更新：2026-08-21
+> 最后更新：2026-08-24
 > 审核人：Richy（已审核）
 
 ---
@@ -63,15 +63,15 @@ git push origin v2.5:V2.5
 
 | 任务类型 | sandbox | 说明 |
 |---|---|---|
-| 只读调研 / 代码审核 | `read-only` | Reviewer、只读调查 |
-| 写文档 / 写证据 | `workspace-write` | 不触碰 `.git` |
-| **需要 git 提交** | `danger-full-access` | `.git` 在 `workspace-write` 下为 protected path，会拦 git |
+| 所有 Codex 派发（开发/集成/文档/Review/验证） | `danger-full-access` | V3.0 统一权限；Reviewer/Validator 受「代码不可变约束」（09 §7.3）：可构建可测试，不得改业务源码/commit 候选/merge |
 
 规则：
 
-- 需要 `git add/commit/merge/push` 的角色（Implementer、Integrator）必须使用 `danger-full-access`；
+- V2.5 的只读沙箱实测无法编译运行测试 → V3.0 起统一 `danger-full-access`，以代码不可变约束 + 隔离 detached 验证工作区 + 前后 HEAD/tree 对账对冲权限放大；
 - **Hermes 不代执行 git**：worktree 创建/commit/merge 由相应角色自办，Hermes 只派发参数、巡检、判 gate；
-- 存在冲突的任务不设并行，实施中真冲突需 Richy 协调（《Hermes流程与边界决议》C2）。
+- 存在冲突的任务不设并行，实施中真冲突需 Richy 协调（《Hermes流程与边界决议》C2）；
+- **调度并发**：调度权由 CoordinatorEpoch 唯一持有；cron 与交互会话按 09 §12.3 移交协议换主，禁止双驱动；
+- **派发门禁**：每次派发前过派发前置门禁（fail-closed），并记录 PolicyVersion + PolicyArtifactDigest。
 
 ## 6. 文档编写约定
 
@@ -102,3 +102,5 @@ git push origin v2.5:V2.5
 | V1.1 | 2026-08-20 | WorkBuddy | §3 规范现状更新为 V2.5 待审核（V2.3 为上一已审核基线） |
 | V2.5 定稿 | 2026-08-20 | WorkBuddy | 评审通过，标记为 V2.5 正式基线 |
 | V2.5 勘误 | 2026-08-21 | WorkBuddy | §3 规范现状由「V2.5 待审核」修正为「V2.5 已审核通过」，与文档头及定稿记录一致 |
+
+| V3.0-draft | 2026-08-24 | Hermes | V3.0 修订同步（提案 v5）：§3 规范现状改 V3.0-draft；§5 沙箱分级改为统一 danger-full-access + Reviewer 代码不可变约束；新增调度并发（CoordinatorEpoch 移交协议）与派发前置门禁说明。详见 `3.0` 分支 V3.0-proposal.md |

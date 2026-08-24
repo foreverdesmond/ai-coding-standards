@@ -115,3 +115,18 @@ body: { prompt, cwd, model, modelProvider, sandbox, approval }
 | V2.5（草稿） | 2026-08-20 | Hermes | 首次发布：确认 Hermes 运行形态/台账/事件/cron/派发/权限/恢复能力；补齐文档版本号与审核状态元信息（Richy 反馈） |
 | V2.5（草稿） | 2026-08-20 | Hermes | 审阅修订：修笔误'原生存章'→'原生模型'；§7冷恢复同步09(自动完成无需Richy)；§2明确区分调度台账与Hermes会话库 |
 | V2.5 定稿 | 2026-08-20 | WorkBuddy | 评审通过，标记为 V2.5 正式基线 |
+
+
+---
+
+## V3.0 附录：沙箱与特权操作边界更新（2026-08-24）
+
+1. **所有 Codex 派发统一 `danger-full-access`**（含 Review/Validator）：V2.5 只读沙箱实测
+   无法编译运行测试；权限放大以「代码不可变约束」对冲（09 §7.3）。
+2. **跨 profile 服务隔离铁律**：任一 agent 不得 stop/restart/edit 其他 profile 的服务；
+   排障用无侵入手段；跨 profile 协调唯一合法路径是上报 Richy。
+3. **安全拦截 = 权限信号**：被护栏拒绝的操作必须转交 Richy 执行，禁止 at/batch/后台脚本
+   等方式绕过重试。
+4. **特权操作留痕**：systemctl/at/crontab 变更等须先获 Richy 授权并写 OPS-AUDIT 记录。
+   （源起：2026-08-22 网关越权事故，详见 incidents/2026-08-22-gateway-bypass/）
+5. 共享技能 `privileged-operations-governance` 为全 profile 强制原则。

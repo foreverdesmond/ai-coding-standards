@@ -29,7 +29,8 @@ IterationID:
 TaskID:
 InvocationID:
 ExecutionStatus: Completed / Blocked
-Status: Verified / VerifiedWithWaivers / Failed / NeedsAttention / NotRun / NotIssued
+Status: Verified / VerifiedWithWaivers / Failed / NotRun / NotIssued
+（需要输入或授权时属载体状态 CarrierStatus=NeedsAttention，不写入 VerificationStatus）
 BlockerType: None / RepositoryEnvironment / ToolRuntime / Authorization
 Level:
 BranchAndCommit:

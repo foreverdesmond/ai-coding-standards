@@ -1,7 +1,7 @@
 # 总调度 Agent（Hermes 常驻调度配置）
 
-> 规范版本：V3.0-draft（基于 V2.5；修订提案 3.0 分支）
-> 文档状态：修改中（V2.5 为上一已审核基线）
+> 规范版本：V3.0
+> 文档状态：已审核通过（定稿 2026-08-24）
 > 作者：WorkBuddy（受 Hermes 总调度委派）
 > 创建日期：2026-08-20
 > 最后更新：2026-08-24
@@ -140,3 +140,5 @@ NextActionOrInspection:
 | V2.5 定稿 | 2026-08-20 | WorkBuddy | 评审通过，标记为 V2.5 正式基线 |
 
 | V3.0-draft | 2026-08-24 | Hermes | V3.0 修订：并发模型改 CoordinatorEpoch/FencingToken（原子条件换主+失联授权接管）；执行故障语义对齐 09 §8（零业务结论亦属执行故障；补发≤1 次；MaxAutomaticAttempts≤3 持久化计数 + NeedsAttention 出口）；派发注入 PolicyVersion/PolicyArtifactDigest/CoordinatorEpoch 并过门禁 |
+
+| V3.0 定稿 | 2026-08-24 | Tiffany-Dev | Richy 宣布「V3.0 整体审核通过」：版本头升 V3.0/已审核通过；十轮审核（提案 v1-v5 + 正文九轮收口）全部关闭；D0/D1 残留清零验收达成；证据包 E1-E8 + Canary 11/11 PASS 存档 |

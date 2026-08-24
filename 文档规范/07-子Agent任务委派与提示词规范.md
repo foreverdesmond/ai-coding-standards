@@ -1,7 +1,7 @@
 # 子任务与 Agent 委派及提示词规范
 
-> 规范版本：V3.0-draft（基于 V2.5，修订提案 3.0 分支 V3.0-proposal.md v5）
-> 规范状态：修改中（V2.5 为上一已审核基线）
+> 规范版本：V3.0
+> 规范状态：已审核通过（V2.5 为上一基线；定稿 2026-08-24，Richy 终审通过）
 > 适用范围：使用 Agent 执行开发、Review、测试、调度或合并审核
 > 作者：Tiffany-Dev（V3.0 修订；初版=WorkBuddy）
 > 修订日期：2026-08-24
@@ -270,3 +270,5 @@ UI 显示 idle/completed、Git HEAD 未变化或读取接口暂时无结果，�
 | V2.5 勘误 | 2026-08-21 | WorkBuddy | 修正笔误「改审」→「更改」；§5.1 标题层级 ## → ###；§8.2 术语统一「周期巡检」→「对账」 |
 
 | V3.0-draft | 2026-08-24 | Hermes | V3.0 修订（提案 v5）：①§2 角色表 Reviewer 行、§5.1 Git 权限：「只读」改为「代码不可变约束」——统一 danger-full-access（构建/测试需写权限），隔离 detached 验证工作区 + 前后 HEAD/tree 双向对账；Coordinator 补 Epoch 约束与门禁约束；②§2.1 ExpectedExecutionKind 静态枚举改为引用「载体策略制品」当前版本，派发记录增补 PolicyVersion+PolicyArtifactDigest |
+
+| V3.0 定稿 | 2026-08-24 | Tiffany-Dev | Richy 宣布「V3.0 整体审核通过」：版本头升 V3.0/已审核通过；十轮审核（提案 v1-v5 + 正文九轮收口）全部关闭；D0/D1 残留清零验收达成；证据包 E1-E8 + Canary 11/11 PASS 存档 |

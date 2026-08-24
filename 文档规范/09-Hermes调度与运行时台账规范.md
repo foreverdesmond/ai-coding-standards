@@ -341,7 +341,7 @@ BlockerType: None / RepositoryEnvironment / ToolRuntime / Authorization
 
 ## 11. cron 对账
 
-Hermes cron（约 1 分钟）对账每轮：
+Hermes 定时对账每轮：
 
 1. 读台账与 `Paused`；
 2. `Paused=true` 时只报告暂停，不读取或派发业务后续；
@@ -356,7 +356,7 @@ Hermes cron（约 1 分钟）对账每轮：
 
 cron 对账在每轮额外检查长期无进展的任务，避免静默卡死（注意：仍在活动、有最近心跳或正在等待人类授权的任务不误报）：
 
-- 任务持续处于 `ContextGenerationPending` / `Ready` / `InProgress` / `PendingConsumption` 超过 **2 个 cron 周期**（约 2 分钟）无任何状态推进或读取活动 → 记录停滞并告警；仍无进展超过 **4 个 cron 周期** → 升级项目负责人（Richy）。
+- 任务持续处于 `ContextGenerationPending` / `Ready` / `InProgress` / `PendingConsumption` 超过 **2 个连续对账周期**（周期长度登记于实例能力记录）无任何状态推进或读取活动 → 记录停滞并告警；仍无进展超过 **4 个 cron 周期** → 升级项目负责人（Richy）。
 - 任务处于 `Integrated` 但缺少 `IntegrationVerified` 回写（即无对应 CI/集成验证回写信号）超过 **2 个 cron 周期** → 记录停滞并告警；超过 **4 个 cron 周期** → 升级 Richy，由 Hermes 重派 `IntegrationValidationTask` 或人工介入。
 - 依赖环检测：任务因上游长期 `Ready`/`InProgress` 未满足而无法推进时，cron 在停滞升级时一并报告依赖阻塞图，便于定位环依赖（环依赖的拒绝登记规则见 `04` §5.2）。
 

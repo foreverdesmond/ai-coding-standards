@@ -22,7 +22,7 @@
 `AGENTS.md` 采用分层 + 就近覆盖（closest-wins）机制：
 
 ```text
-~/.claude/AGENTS.md           # global：跨所有仓库的全局约定
+全局上下文入口                 # 跨所有仓库的全局约定（宿主路径由运行环境映射）
   → ./AGENTS.md               # 项目级：本仓库约定（本文件）
     → ./<subdir>/AGENTS.md    # 子包级：子目录专属约定（按需）
 ```

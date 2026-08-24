@@ -243,8 +243,8 @@ UI 显示 idle/completed、Git HEAD 未变化或读取接口暂时无结果，�
 - [ ] Review 视角未被开发上下文提前限制；
 - [ ] 停止条件明确；
 - [ ] 已通过派发前清单，并配置文档状态生产/消费与对账；
-- [ ] 已配置唯一台账（`LedgerLocation`）、幂等 `DispatchKey`、单实例幂等去重（无协调租约锁）、暂停、三级恢复和适用 Canary；
-- [ ] 指定执行机制（WorkBuddy/Codex/Human）不被未经授权替代（禁止伪独立自审）；
+- [ ] 已配置唯一台账（`LedgerLocation`）、幂等 `DispatchKey`、CoordinatorEpoch Fencing 校验、暂停闸和适用 Canary；
+- [ ] 策略制品指定的执行机制不被未经授权替代（禁止伪独立自审）；
 - [ ] 未绑定不必要的具体模型、业务或工具。
 
 ## 10. 模板维护

@@ -27,7 +27,7 @@
 - 检查任务状态、提交绑定、证据和巡检规则是否可执行。
 - 检查派发前强制清单、台账状态生产/消费、事件 + cron 对账、中断门禁和 Review 循环升级是否可执行；
 - 检查唯一 `LedgerLocation`、`CanonicalTaskDocumentPath`、Schema 明确，台账不进 Git、`TASK-STATE-EXCHANGE` 为持久快照，幂等 `DispatchKey`、暂停、三级恢复（热/冷/灾难）和适用 Canary 是否可执行；
-- 检查指定执行机制（WorkBuddy/Codex/Human）是否不可被未经授权替代（禁止伪独立自审）；
+- 检查策略制品指定的执行机制是否不可被未经授权替代（禁止伪独立自审）；
 - 检查工期是否包含 Review、预期返工、迭代集成、系统验证、证据和人工门禁。
 
 输出：

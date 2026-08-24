@@ -36,7 +36,7 @@
 5. **最大安全状态**：恢复时只恢复到证据支持的最高状态，无法证明的内容保持待核实。
 6. **控制面故障不污染业务状态**：派发、事件读取或台账写入故障不得伪装成代码 `Blocked` 或 Review Finding。
 7. **单写者 Epoch 模型**：调度权由 `CoordinatorEpoch`（FencingToken）唯一持有；任一时刻仅一个当前所有者。幂等由 `DispatchKey` 去重 + Epoch 校验双重保证（cron 与交互会话竞争调度权时按 §12.3 移交协议换主）。
-8. **事件驱动 + cron 兜底**：事件（飞书长连接 / Codex 网关轮询）优先，cron 定时对账兜底；事件丢失不影响正确性。
+8. **事件驱动 + 定时对账兜底**：事件源（推送/轮询/回写）优先消费，定时对账兜底；事件丢失不影响正确性。具体通道实现登记于实例能力记录。
 9. **执行机制显式配置**：每项派发记录 `ExpectedExecutionKind`、模型、沙箱；执行载体不可被未经授权替代。
 
 ## 3. 三类状态
@@ -56,7 +56,7 @@
 | Unavailable | 当前无法读取或执行载体丢失 |
 | Cancelled | 已明确取消执行载体 |
 
-Codex 网关返回正式 `thread id` 时直接登记执行标识；只返回请求标识时表示 `Provisioning`，不得判定为创建失败。统一用 `ExecutionRef` 引用执行载体，不区分 `clientThreadId/threadId`。
+适配器返回正式执行身份时直接登记；只返回请求标识（暂定身份）时表示 `Provisioning`，不得判定为创建失败。统一用 `ExecutionRef` 引用执行载体，不区分底层身份模型。
 
 ### 3.2 任务状态（TaskState）
 
@@ -170,18 +170,20 @@ V3.0 新增必填：
 
 ### 6.1 事件源与双通道调度
 
-| 通道 | 覆盖 | 性质 |
+事件源按**功能类型**定义；每类的具体通道实现属部署事实，登记于实例能力记录：
+
+| 功能类型事件源 | 覆盖 | 性质 |
 |---|---|---|
-| 飞书长连接（lark-ws） | 收 WorkBuddy 回复消息 | 事件，可能丢（已实证） |
-| Codex 网关轮询 `GET /v1/threads/:id` | 查 Codex 线程进度 | 事件，主动轮询 |
-| CI / 集成验证回写 | Integrator 合并精确 commit 后，运行/触发受影响集成检查，通过其载体通道（飞书/Codex）回报结构化协议头（含 `IntegrationCommit` + `IntegrationStatus`），由 Hermes 消费写入台账 | 事件，由执行载体回报，不依赖外部 webhook |
-| 候选冻结（human-gated） | 项目负责人冻结迭代候选后告知 Hermes（或 Hermes 轮询到冻结标记），触发派发 Level 1（Validator / System Reviewer） | 事件，human-gated |
-| Hermes cron 定时轮询 | **兜底对账**（约 1 分钟） | 兜底，补事件丢漏 |
-| TG 推送 | 通知关键节点 | 输出，0 token |
+| 推送事件源 | 接收交互载体的回复消息 | 事件，可能丢 |
+| 轮询事件源 | 查询异步载体的执行进度 | 事件，主动轮询 |
+| 集成回写 | Integrator 合并精确 commit 并运行受影响集成检查后，经其载体通道回报结构化协议头（含 `IntegrationCommit` + `IntegrationStatus`），由 Hermes 消费写入台账 | 事件，由执行载体回报，不依赖外部 webhook |
+| 人工冻结事件 | 项目负责人冻结迭代候选后告知 Hermes（或 Hermes 轮询到冻结标记），触发派发 Level 1 | 事件，human-gated |
+| 定时对账兜底 | 补推送事件丢漏的对账循环 | 兜底，补事件丢漏 |
+| 关键节点通知输出 | 通知项目负责人关键节点 | 输出 |
 
-**结论**：事件（飞书 + Codex 轮询 + CI 回写 + 候选冻结）优先消费，cron 定时对账兜底；事件丢失不影响正确性。
+**结论**：事件源优先消费，定时对账兜底；事件丢失不影响正确性。
 
-> **IntegrationVerified 回写说明**：`Integrated` 之后的 `IntegrationVerified` 不再依赖外部 CI webhook。执行主体为 **Integrator**（或独立 `IntegrationValidationTask`）：其合并精确 commit 后，运行/触发受影响集成检查，并通过自身载体通道（飞书/Codex）回报结构化协议头（含 `IntegrationCommit` + `IntegrationStatus=Passed/Failed`）；Hermes 消费该信号后写入台账，触发下游 Level 1。回报缺失视为待消费信号，由 cron 停滞检测升级（见 §11）。
+> **IntegrationVerified 回写说明**：`Integrated` 之后的 `IntegrationVerified` 不再依赖外部 CI webhook。执行主体为 **Integrator**（或独立 `IntegrationValidationTask`）：其合并精确 commit 后，运行/触发受影响集成检查，并通过自身载体通道回报结构化协议头（含 `IntegrationCommit` + `IntegrationStatus=Passed/Failed`）；Hermes 消费该信号后写入台账，触发下游 Level 1。回报缺失视为待消费信号，由 cron 停滞检测升级（见 §11）。
 
 ### 6.2 幂等身份
 
@@ -218,12 +220,17 @@ DispatchKey = IterationID + TaskID + Stage + TargetIdentity
 > 具体端点、请求参数、供应商与通道配置属部署事实，登记于**实例能力登记**
 > （非规范性受控记录），随部署演进随时更新，不进入规范正文。
 
-### 7.2 ExecutionRef 统一身份
+### 7.2 ExecutionRef 统一身份（V3.0：平台无关）
 
-- 所有执行载体统一建模为 `ExecutionRef`，替代旧 `clientThreadId → threadId` 两段式映射。
-- Codex 返回正式 thread id 时登记 `ExecutionRef = thread id`；只返回请求标识时登记 `Provisioning`，随后解析正式标识。
+- 所有执行载体统一建模为 `ExecutionRef`——一个可追踪的、由适配器返回的执行身份；
+  不规定任何平台的 ID 模型或格式。
+- **暂定与正式身份**：适配器可能先返回**暂定执行身份**（此时登记 `Provisioning`），
+  正式身份就绪后**替换**暂定身份；替换过程必须留痕，不得产生两个并存的正式身份。
 - 派发创建调用失败时登记 `ControlPlaneError`，不得登记业务 `Blocked`，不得改用其他执行机制兜底（除非项目负责人批准 `ApprovedEquivalent`）。
 - **载体不可用升级阈值**：同一执行载体（按 `ExecutionRef` 识别）连续派发/读取失败达到 **3 次**仍不可用，Hermes 不得继续空转重试，须升级并告警项目负责人（Richy）；仅当 Richy 批准 `ApprovedEquivalent` 时才可换等效载体，否则保持 `Provisioning`/`NeedsAttention`/`PendingVerification` 并等待 Richy 介入。
+
+> 历史兼容：V2.5 台账中的旧两段式身份字段读入时等价映射为一个 `ExecutionRef`
+> （具体字段名见实例登记）。
 
 ### 7.3 沙箱分级与 git 授权（V3.0：统一 danger-full-access + 代码不可变约束）
 
@@ -250,7 +257,7 @@ Hermes 不代执行 git；worktree 创建由 Implementer 自办（Hermes 只派�
 
 ```text
 Hermes 读台账
-→ 事件到达（飞书收 WB 回复 / Codex 网关轮询到 completed）或 cron 对账触发
+→ 事件源到达（推送消息 / 轮询到完成态）或定时对账触发
 → 收集 SignalState = PendingConsumption 的记录
 → 仅按该记录的 ExecutionRef 定向读取详细 final/求助
 → 校验后更新汇总状态、标记 Consumed 并派发后续

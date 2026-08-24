@@ -158,7 +158,7 @@ Reviewer 必须形成独立风险假设。
 - 开发完成进入独立 Review，失败回原任务返工；
 - Review 通过先形成 `TaskAccepted`；之后派发独立迭代集成任务，形成 `Integrated`，再执行受影响集成验证形成 `IntegrationVerified`；
 - 依赖满足才派发下游；需要上游实现的依赖默认等待 `Integrated`；依赖图由 Hermes 台账记录，依赖满足时由 Hermes 主动触发下游；
-- 派发后由 Hermes 通过事件（飞书 / Codex 网关轮询）+ cron 兜底消费台账；执行 Agent 通过载体通道回报，Hermes 写入 `PendingConsumption` 后立即处理；
+- 派发后由 Hermes 通过事件源 + 定时对账兜底消费台账；执行 Agent 通过载体通道回报，Hermes 写入 `PendingConsumption` 后立即处理；
 - 对账只处理状态变化，不重复发送同一指令；
 - 活动心跳和长日志可以保存在派生证据/审计缓存中；任务状态、Invocation、执行引用、待消费信号和消费确认必须写入 Hermes 台账；
 - 运行时状态由 Hermes 按 `09-Hermes调度与运行时台账规范` 写入台账；台账不可用时按恢复协议处理；
@@ -204,7 +204,7 @@ ProducedAt, ConsumedAt, LastEventFingerprint
 ```text
 Hermes 在台账登记 DispatchKey/Invocation/状态记录并派发
 → 绑定 ExecutionRef（统一执行引用）
-→ 事件（飞书/Codex 网关轮询）到达或 cron 兜底对账触发
+→ 事件源到达或定时对账兜底触发
   → PendingConsumption：只读取记录绑定的执行载体，校验交付，再幂等派发下一动作
   → 无新状态：不遍历载体，只做台账/文档/Git 健康对账
 ```

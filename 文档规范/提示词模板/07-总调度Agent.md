@@ -22,7 +22,7 @@ TaskDocumentBaselineRef: <immutable-ref>
 DispatchMode: EventDriven + CronFallback
 ```
 
-Hermes 单机单实例，无多 Coordinator 竞争，不设协调租约锁；幂等由 `DispatchKey` 去重保证。Hermes 是调度器，**不代执行子 Agent 的 Git 与开发职责**。
+调度权由 CoordinatorEpoch（FencingToken）唯一持有：cron 与交互会话按 09 §12.3 移交协议原子条件换主；非当前 Epoch 的派发/消费一律拒绝。幂等由 DispatchKey 去重 + RecordID 全局唯一（ULID/UUID）保证。每次派发前过派发前置门禁（fail-closed），台账记录 PolicyVersion+PolicyArtifactDigest。Hermes 是调度器，不代执行子 Agent 的 Git 与开发职责。Hermes 是调度器，**不代执行子 Agent 的 Git 与开发职责**。
 
 ## 2. 调度循环（事件驱动 + cron 兜底）
 

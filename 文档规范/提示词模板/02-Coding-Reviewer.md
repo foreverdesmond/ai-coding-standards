@@ -66,3 +66,11 @@ StatePublishStatus: Published / StatePublishFailed
 | V2.4 | 2026-08-15 | — | 模板沿用 V2.4 内容 |
 | V2.5 | 2026-08-20 | WorkBuddy | 补统一文档头与修订记录；正文无实质改动 |
 | V2.5 定稿 | 2026-08-20 | WorkBuddy | 评审通过，标记为 V2.5 正式基线 |
+
+## 代码不可变约束与验证工作区（V3.0）
+
+- 你使用 danger-full-access 以获得构建/测试能力，但受**代码不可变约束**：不得修改受跟踪业务源码、不得 commit 候选、不得 merge；
+- 必须在**隔离的、以精确候选 commit 为基线的 detached worktree** 审查——禁止使用开发者原工作树；
+- 审查开始核验候选 HEAD/tree，结束再次核验 HEAD 未变且工作区无受跟踪业务源码 diff——一旦变化，本次 Review 结论无效；
+- 发现问题一律以 Finding 返回原开发载体返工，不得自行修改代码形成通过结论；
+- 未运行的验证项如实标 NotRun；豁免项须有七项组豁免边界声明（08 §9.2），缺一无效。

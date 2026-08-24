@@ -29,7 +29,7 @@ IterationID:
 TaskID:
 InvocationID:
 ExecutionStatus: Completed / Blocked
-Status: Verified / Failed / NotRun / NotIssued
+Status: Verified / VerifiedWithWaivers / Failed / NeedsAttention / NotRun / NotIssued
 BlockerType: None / RepositoryEnvironment / ToolRuntime / Authorization
 Level:
 BranchAndCommit:
@@ -59,4 +59,4 @@ RawEvidence:
 
 - L2+ 验证必须在独立 detached worktree 检出精确候选 commit 后执行；候选受跟踪业务源码前后零变化；测试产物可受控清理；
 - gitignore 依赖须声明可复现受控回退来源；缺失时形成环境阻塞记录并升级 Richy，不得盲目重试；
-- 豁免项须有七项组豁免边界声明（命令场景/失败签名/影响范围/风险/替代证据/授权人/到期候选身份）；通用错误码禁止单独豁免；带豁免通过记 Passed-with-Waivers。
+- 豁免项须有七项组豁免边界声明（命令场景/失败签名/影响范围/风险/替代证据/授权人/到期候选身份）；通用错误码禁止单独豁免；带有效豁免的通过记 `VerifiedWithWaivers`（不满足要求「无豁免」的门禁）。

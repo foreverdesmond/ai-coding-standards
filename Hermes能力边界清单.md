@@ -15,7 +15,7 @@
 
 | 项 | 确认结果 |
 |---|---|
-| 部署形态 | **单机单实例**（一台服务器跑一套 Hermes，仅产生一个调度器实例） |
+| 部署形态 | ~~**单机单实例**~~ → V3.0：多 driver 可竞争调度权；由 CoordinatorEpoch FencingToken 唯一持有，原子条件换主（见 09 §12.3 与文末 V3.0 附录） |
 | 推论 | 无多 Coordinator 竞争 → **无需协调租约锁**；幂等由 `DispatchKey` 去重保证 |
 | 常驻性 | **常驻服务**（非临时线程），持续运行，天然是"总调度" |
 
@@ -69,7 +69,7 @@ body: { prompt, cwd, model, modelProvider, sandbox, approval }
 
 | 任务类型 | sandbox | 说明 |
 |---|---|---|
-| 只读调研/Review | read-only | Reviewer、审阅 |
+| ~~只读调研/Review~~ → V3.0 统一 danger-full-access | Reviewer/Validator 受代码不可变约束（可构建测试，不改业务源码），在隔离 detached 验证工作区工作 |
 | 普通写文件 | workspace-write | 写文档/证据 |
 | **需要 git 提交**（开发/集成/设计） | **danger-full-access** | `.git` 在 workspace-write 下是 protected path，会拦 git |
 

@@ -40,7 +40,7 @@ Release → production/main
 |---|---|---|
 | A1 | Hermes 台账载体 | 由 Hermes 定（倾向 SQLite），后续《Hermes能力边界清单》由 Hermes 独立完成 |
 | A2 | 事件源与巡检 | **收消息 + 定时轮询（约 1 分钟）双通道**；飞书推送可能丢(已实证 WB 回复但 Hermes 未收到)，需轮询兜底 |
-| A3 | 部署形态 | **单机单实例**（需 Hermes 确认：一台服务器一套 Hermes 只产生单实例） |
+| A3 | 部署形态 | ~~**单机单实例**~~ → V3.0：多 driver 竞争调度权，由 CoordinatorEpoch FencingToken 唯一持有（见 09 §12.3 与文末附录） |
 | A4 | 恢复语义 | **热**：单次异常自动从最近台账快照续跑；**冷**：重启后全自动读台账+Git 重建，失败自动升级灾难级；**灾难**：台账丢失/损坏（或冷恢复失败），从 Git 任务文档快照重建，需 Richy 介入批准 |
 | A5 | cron 精度 | 由 Hermes 确认最小精度与能否承载调度对账 |
 
@@ -58,7 +58,7 @@ Release → production/main
 | 精简后角色 | 核心职责 | 关键边界 |
 |---|---|---|
 | Implementer（开发） | 首次开发 + 返工 + L0 单测 | 只在自己 feature 分支；跑 L0 并落证据；不批准自己 |
-| Reviewer（审核） | 审核开发成果（diff/commit） | 基于 diff+开发者 L0 证据，只抽查关键路径不重跑全套；只读，不 merge |
+| Reviewer（审核） | 审核开发成果（diff/commit） | 基于 diff+L0 证据，只抽查关键路径不重跑全套；V3.0 代码不可变约束（danger-full-access+隔离验证工作区），不 merge |
 | Integrator（集成） | 合并 feature→iteration | 只合并已 approved 的精确 commit；解决冲突；不自己审自己的 merge |
 | Validator（测试验证） | 合并后全量测试（L1+回归） | 在集成分支跑全量；只读/测试环境；不 merge |
 | Doc/Design Reviewer（文档/设计审核） | 一切文档审核+设计+工作包/上下文 | 纯文档工作归其；低风险设计不审、高风险同角色他审 |
@@ -83,8 +83,8 @@ Release → production/main
 | # | 决议项 | 结论 |
 |---|---|---|
 | D1 | danger-full-access 使用 | 需要提交权限的角色（开发/集成/设计）均可使用 |
-| D2 | worktree 生命周期 | 创建=Implementer（方案Y）；使用=Implementer；审核=Reviewer只读；清理=Integrator统一 |
-| D3 | Reviewer 拿 snapshot 方式 | **D3b：Reviewer 直接进开发者 worktree 只读审核**（严格串行不重叠；开发读写/审核只读；一个开发 agent 只负责一个功能；避免跨 worktree 丢失不能进 git 的本地内容） |
+| D2 | worktree 生命周期 | 创建=Implementer（方案Y）；使用=Implementer；~~审核=Reviewer只读~~ → V3.0：Reviewer 使用隔离 detached 验证工作区；清理=Integrator统一 |
+| D3 | Reviewer 拿 snapshot 方式 | ~~**D3b：Reviewer 直接进开发者 worktree 只读审核**~~（已被 V3.0 取代：改为隔离 detached 验证工作区 + 代码不可变约束，见 09 §7.3）（严格串行不重叠；开发读写/审核只读；一个开发 agent 只负责一个功能；避免跨 worktree 丢失不能进 git 的本地内容） |
 
 ### E. 需求/设计/任务拆分的责任
 

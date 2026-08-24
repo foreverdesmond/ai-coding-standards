@@ -23,7 +23,7 @@ V2.5 收敛为 6 种核心角色（详见 README §4），每个任务按需启�
 | Implementer（开发） | 首次开发 + 返工 + L0 单测 | 只在自己 feature 分支；不批准自己 |
 | Reviewer（审核） | 审核开发成果（diff/commit） | 基于 diff + L0 证据审；代码不可变约束（09 §7.3）：danger-full-access 下在隔离 detached 验证工作区审查，不改业务源码、不 commit 候选、不 merge |
 | Integrator（集成） | 合并 feature → iteration | 只合并已 approved 的精确 commit；不自己审自己的 merge |
-| Validator（测试验证） | 合并后全量测试（L1+回归） | 在集成分支跑全量；只读/测试环境；不 merge |
+| Validator（测试验证） | 合并后全量测试（L1+回归） | danger-full-access；在干净 detached 检出上跑全量；受代码不可变约束，不 merge |
 | Doc/Design Reviewer（文档/设计审核） | 文档审核 + 设计 + 工作包/上下文 | 纯文档工作归其；低风险设计不审、高风险同角色他审 |
 
 **合并来源（V2.4 → V2.5）**：Rework Implementer → Implementer（返工是开发的续集）；System Reviewer → Reviewer（按 Level 区分）；Merge Reviewer → Reviewer（合并资格审核视角）；Iteration Integrator / Main Merge Executor → Integrator（同为合并执行，仅目标分支不同）；Requirements/Design/Task Reviewer → Doc/Design Reviewer（合一）。

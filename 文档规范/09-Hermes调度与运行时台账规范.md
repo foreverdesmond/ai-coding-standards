@@ -394,12 +394,13 @@ ControlPlaneErrors
 | `StateRevisionAtTakeover` | 接管时的台账 StateRevision 快照 |
 | `LostOwnerTimeout` | 失联判定阈值：固定默认 2 个调度周期；项目可配置正整数阈值，派发前由门禁校验存在且为正整数 |
 
-**正常移交（双向确认）**：
+**正常移交（双向确认；顺序 v5 定稿——旧 owner 的全部写入必须发生在换主之前）**：
 
-1. 新 driver 发起接管请求（TransferID 生成）；
-2. 原 driver 停止派发、输出尾部 Signal 清单与 StateRevision；
-3. 新 driver 执行一次**原子条件更新**：仅当台账中当前 Epoch 与 StateRevision 仍匹配预期值时，新 Epoch 才生效；条件不满足即接管失败，重试或上报；
-4. 双方确认回执入台账；新 driver 接管后先做全量审计。
+1. **旧 owner 写入移交回执**（换主前最后一次写入）：TransferID、停止派发确认、尾部 Signal 清单、当前 StateRevision、同意移交；
+2. 新 driver 以该 TransferID + 回执所载 Epoch/StateRevision 执行一次**原子条件更新**：仅当「当前 Epoch 与 StateRevision 仍匹配」时新 Epoch 才生效；条件不满足即接管失败，重试或上报；
+3. 换主成功后，**新 owner** 写入接管成功回执与审计起点；
+4. 审计记录将两条回执经同一 TransferID 关联为一次完整移交；
+5. **旧 owner 在换主后不得再向台账写入任何内容**（§12.2 Fencing 规则）。
 
 **失联恢复**：
 

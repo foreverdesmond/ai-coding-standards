@@ -24,7 +24,7 @@
 | 项 | 确认结果 |
 |---|---|
 | 自身存储 | Hermes 框架用 **SQLite 会话库** 保存会话/记忆（框架级，非调度台账） |
-| 项目台账载体 | **本地 JSON 状态文件**（项目目录内、**不进 Git**）+ 可选 SQLite；由 Hermes 维护 |
+| 项目台账载体 | **本地 JSON 状态文件**（项目目录内、**不进 Git**）+ 可选 SQLite；由当前 CoordinatorEpoch owner 维护 |
 | 台账内容 | 任务/阶段/状态/证据指针/依赖图/调度消费水位(ConsumedRevision) |
 | 不可变快照 | 开发任务文档的 `TASK-STATE-EXCHANGE` 块仍作为 **Git 持久快照**（跨重启/灾难恢复用） |
 | 持久可恢复性 | 台账持久化，Hermes 重启可读台账 + Git 重建 |

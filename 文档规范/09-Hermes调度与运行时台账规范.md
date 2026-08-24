@@ -410,6 +410,13 @@ ControlPlaneErrors
 2. 恢复模式下的接管必须经项目负责人（Richy）明确授权，禁止自动自愈；
 3. 授权后按原子条件更新换主；旧 Epoch 的全部在途执行冻结待人工裁定。
 
+**Richy 确认要求（按移交类型区分，V3.0 定稿决议 DEC-V3.0-001）**：
+
+| 移交类型 | Richy 事前确认 | 触发约束 | 事后义务 |
+|---|---|---|---|
+| 正常移交（双向确认） | **无需逐次确认** | 只能由 Richy 明确指令触发（如"继续调度""暂停""冻结"）；Agent 不得基于自身判断发起移交 | 新 owner 在下一份简报中报告 TransferID、换主原因、新旧 Epoch，供事后审查；发现异常可再换主回滚（Epoch+1） |
+| 失联恢复接管 | **必须显式授权**（上文条款） | 超过 `LostOwnerTimeout` 无心跳/tick | 授权记录入台账，作为替代旧 owner 回执的依据 |
+
 **Fencing 执行规则**：
 
 - 所有派发与消费动作必须携带当前 Epoch 并校验匹配，不匹配即拒绝；
@@ -552,3 +559,5 @@ Canary 任一场景失败时进入 `CanaryFailed` 状态，并按下述路径闭
 | V3.0-draft-4 | 2026-08-24 | Hermes | 四轮收口（Codex 三审）：①04 §8 台账段落不再重复 schema——改为引用 09 §5 运行时台账契约，维护者改「当前 CoordinatorEpoch owner」；②04 任务模板 Status 拆为 TaskState/CarrierStatus/VerificationStatus 三字段（消除状态混用，VerificationStatus 含 VerifiedWithWaivers）；③04 Reviewer「只读角色」改「候选内容不可变」（danger-full-access 下可构建测试写证据）；④能力清单「由 Hermes 维护」改「由当前 CoordinatorEpoch owner 维护」 |
 
 | V3.0-draft-5 | 2026-08-24 | Tiffany-Dev | 五轮收口（Codex 四审）：§8 达 MaxAutomaticAttempts 上限后的处置改为分域赋值——CarrierStatus=NeedsAttention / TaskState=Blocked / BlockerType=AutomaticAttemptsExhausted + 升级 Richy（修正原"任务转 NeedsAttention"跨状态域赋值）|
+
+| V3.0-draft-6 | 2026-08-24 | Tiffany-Dev | 六轮收口（DEC-V3.0-001 关闭最后一个开放决策）：§12.3 新增 Richy 确认要求表——正常移交无需逐次事前确认，但只能由 Richy 明确指令触发且完成后须在简报中报告 TransferID/原因/新旧 Epoch（供事后审查与回滚）；失联恢复维持 Richy 显式授权。依据：V5 实测调度权事件 10 次中 7 次由 Richy 发起/纠正，逐次确认不增加安全只增加延迟与确认疲劳 |

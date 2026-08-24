@@ -36,7 +36,7 @@
 
 | 事件/通道 | 覆盖场景 | 说明 |
 |---|---|---|
-| ① 推送事件源 | 收交互载体回复消息 | 被动，可能丢消息（已实证）→ 需兜底；实现登记于实例记录 |
+| ① 推送事件源 | 收交互载体回复消息 | 被动，可能丢消息（已实证）→ 必须有定时对账兜底，不能单依赖事件；实现登记于实例记录 |
 | ② 轮询事件源 | 查异步载体执行进度 | 主动轮询状态直至完成/失败；实现登记于实例记录 |
 | ③ Hermes cron 定时轮询 | **兜底对账** | 频率 ~1 分钟；补事件丢漏 |
 | ④ TG 推送 | 通知 Richy 关键节点 | **0 token**（读台账结构化字段+模板拼装，不走 LLM） |
@@ -49,7 +49,7 @@
 |---|---|
 | 支持语法 | `30m` / `every 2h` / 标准 5 段 cron `0 9 * * *` / ISO 一次性时间戳 |
 | 最小精度 | **分钟级**（5 段 cron，无秒级） |
-| 能否承载调度对账 | **能**。cron 每 1 分钟对账一次，处理待消费记录、健康检查，符合"事件+cron 兜底" |
+| 能否承载调度对账 | **能**。定时对账具备满足约定时限的精度（频率登记于实例能力记录），处理待消费记录与健康检查，符合"事件+兜底"模型 |
 
 ## 5. Agent 派发能力（V3.0：抽象结论）
 
@@ -67,7 +67,7 @@
 | **需要 git 提交**（开发/集成/设计） | **danger-full-access** | `.git` 在 workspace-write 下是 protected path，会拦 git |
 
 **实测依据**（2026-08-19 已验）：
-- workspace-write 下 `git add` 报 `index.lock: Operation not permitted`（.git 被 sandbox 拦）
+- 沙箱可拒绝 Git 元数据写入（具体错误签名登记于实例记录）——V3.0 已统一 danger-full-access 规避
 - danger-full-access 下 `git status/worktree add/add/commit/push/reset` **全部成功**
 - 自定义 Permission Profile 在 managed 环境被宿主 requirements 钳制，不可靠
 
@@ -89,7 +89,7 @@
 
 ## 9. 已知限制（诚实披露）
 
-1. **飞书推送可能丢**（已实证）：必须靠 cron 轮询兜底，不能单依赖事件。
+1. **推送事件源可能丢**（已实证）：必须靠轮询/定时对账兜底，不能单依赖事件。
 2. **Codex 部分模型输出偶发异常**：deepseek-flash 短任务偶尔提前结束/流中断返回空；pro 更稳；网关已按最后一条 agentMessage 提取最终答案。
 3. 执行载体存在**额度与配额限制**，用尽时报额度错误并进入载体不可用流程；具体周期与错误签名登记于实例记录。
 4. **Hermes 不代执行 git**：worktree 创建/commit/merge 由相应角色 Agent 用 danger-full-access 自办，Hermes 只派发参数、巡检、判 gate。
@@ -120,7 +120,7 @@
    排障用无侵入手段；跨 profile 协调唯一合法路径是上报 Richy。
 3. **安全拦截 = 权限信号**：被护栏拒绝的操作必须转交 Richy 执行，禁止 at/batch/后台脚本
    等方式绕过重试。
-4. **特权操作留痕**：systemctl/at/crontab 变更等须先获 Richy 授权并写 OPS-AUDIT 记录。
+4. **特权操作留痕**：服务或计划任务管理操作等须先获 Richy 授权并写 OPS-AUDIT 记录（工具清单见实例记录）。
    （源起：2026-08-22 网关越权事故，详见 incidents/2026-08-22-gateway-bypass/）
 5. 共享技能 `privileged-operations-governance` 为全 profile 强制原则。
 

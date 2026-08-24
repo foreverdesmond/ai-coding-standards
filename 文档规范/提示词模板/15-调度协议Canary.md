@@ -36,7 +36,7 @@ SafeRepositoryTarget: <read-only or disposable target>
 
 1. 派发只返回临时请求标识，进入 Provisioning 并最终绑定正式 `ExecutionRef`；
 2. 执行载体在 cron 对账周期前完成，先回报 `PendingConsumption`，Hermes 按台账版本立即消费；
-3. 事件（飞书 / Codex 网关）不可用，但台账状态记录存在，仍能精确读取对应 final；
+3. 推送/轮询事件源不可用，但台账状态记录存在，仍能精确读取对应 final；
 4. 缺协议字段时由同一执行载体补发，不重复创建；
 5. 同一 `RecordID + SignalRevision` 重复读取只处理一次；
 6. 导入一份用户提供的结构化结果，进入核验而非直接否定/批准；

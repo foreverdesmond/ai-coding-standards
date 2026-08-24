@@ -29,7 +29,7 @@ DispatchMode: EventDriven + CronFallback
 
 ```text
 启动：加载台账 → 校验恢复点（冷恢复见 14）
-→ idle 等待：事件到达（飞书收 WorkBuddy 回复 / Codex 网关轮询到 completed）
+→ idle 等待：推送事件源到达（交互载体回复 / 轮询事件源到完成态）
 → cron 兜底对账（约 1 分钟）：处理待消费记录、健康检查
 → 消费 PendingConsumption 记录：仅按 ExecutionRef 定向读取对应执行载体
 → 依赖满足 → 主动触发下游派发

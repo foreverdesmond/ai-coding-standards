@@ -303,7 +303,7 @@ Hermes 读台账
 | 开发是否正式提交 | 台账记录 + Implementer final + Git 校验 |
 | Review 结论 | 台账记录 + 独立 Reviewer final |
 | Review 审核的是哪个代码 | Reviewer final + Git SHA |
-| 执行载体是否运行或结束 | 飞书消息 / Codex 网关线程历史 |
+| 执行载体是否运行或结束 | 对应执行载体的可追溯原始记录（按 ExecutionRef 定向查询） |
 | 项目负责人授权 | 明确用户消息或正式授权记录 |
 
 来源冲突时必须并列记录。例如代码已经出现在迭代分支，但缺少 Review/集成证据时：
@@ -501,7 +501,7 @@ DispatchedCoordinatorEpoch——迭代级字段只反映当前状态，无法回
 
 1. 派发只返回临时请求标识，能正确进入 `Provisioning` 并绑定正式 `ExecutionRef`；
 2. 子任务早于 cron 对账周期完成，事件或下一次对账时能消费；
-3. 飞书事件不可用，但台账存在 `PendingConsumption` 时仍能精确定位结果；
+3. 推送事件源不可用，但台账存在 `PendingConsumption` 时仍能精确定位结果；
 4. final 缺字段时要求原任务补发，不重复创建执行实例；
 5. 重复读取同一 `RecordID + SignalRevision` 不重复派发；
 6. 用户粘贴完整结果时进入核验，而不是直接否定或直接批准；
@@ -525,7 +525,7 @@ Canary 任一场景失败时进入 `CanaryFailed` 状态，并按下述路径闭
 2. 责任人（Hermes 工程侧）修复控制平面或载体配置；
 3. 重跑 Canary → 通过后解除真实业务任务的 `Planned/Ready` 派发冻结；
 4. 连续 **3 次**重跑仍未通过 → 告警项目负责人（Richy）人工介入，不得继续自动重试掩盖问题；
-5. 全程通过 TG / 飞书通知 Richy 当前 `CanaryFailed` 状态与处置进度。
+5. 全程通过配置的通知渠道告知 Richy 当前 `CanaryFailed` 状态与处置进度。
 
 `CanaryFailed` 不是业务 `Blocked`，不污染代码任务状态；它只冻结真实高风险迭代的启动，直至 Canary 通过或 Richy 明确记录临时豁免。
 

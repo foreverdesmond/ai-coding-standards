@@ -68,7 +68,7 @@
 
 **实测依据**（2026-08-19 已验）：
 - 沙箱可拒绝 Git 元数据写入（具体错误签名登记于实例记录）——V3.0 已统一 danger-full-access 规避
-- danger-full-access 下 `git status/worktree add/add/commit/push/reset` **全部成功**
+- danger-full-access 下 Git 操作已通过权限验证（含工作树管理与提交推送；实测命令清单登记于实例记录）
 - 自定义 Permission Profile 在 managed 环境被宿主 requirements 钳制，不可靠
 
 ## 7. 重启恢复语义（A4 三级）

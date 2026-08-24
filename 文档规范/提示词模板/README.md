@@ -24,7 +24,7 @@
 
 尖括号字段必须替换。模板不能直接空白派发，也不能替代执行者自主探索。
 
-所有异步任务必须先填充 `ProtocolVersion`、`IterationID`、`TaskID`、`InvocationID`、`ParentCoordinatorRef`（Hermes 身份）和 `ExpectedExecutionKind`。指定执行机制（WorkBuddy / Codex / Human）不得被未经授权替代，禁止伪独立自审；只有项目负责人事先批准 `ApprovedEquivalent` 时才允许等价执行机制。
+所有异步任务必须先填充 `ProtocolVersion`、`IterationID`、`TaskID`、`InvocationID`、`ParentCoordinatorRef`（Hermes 身份）和 `ExpectedExecutionKind`。策略制品指定的执行机制不得被未经授权替代，禁止伪独立自审；只有项目负责人事先批准 `ApprovedEquivalent` 时才允许等价执行机制。
 
 ## 模板
 

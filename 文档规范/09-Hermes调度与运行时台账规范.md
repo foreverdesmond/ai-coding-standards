@@ -1,10 +1,10 @@
 # Hermes 调度与运行时台账规范
 
-> 规范版本：V2.5
-> 规范状态：已审核通过（V2.5 定稿基线）
+> 规范版本：V3.0-draft（基于 V2.5，修订提案 3.0 分支 V3.0-proposal.md v5）
+> 规范状态：修改中（V2.5 为上一已审核基线）
 > 适用范围：由 Hermes 常驻总调度主导、WorkBuddy / Codex / Human 平行协作执行的开发迭代
 > 前身：`09-调度控制平面与运行时台账规范`（V2.4，Codex 线程当总调度）
-> 修订日期：2026-08-21
+> 修订日期：2026-08-24
 > 依赖底座：《Hermes能力边界清单》（实测能力）、《Hermes流程与边界决议》（边界决策）
 > 作者：WorkBuddy（重写）
 > 审核人：Richy（已审核）
@@ -35,7 +35,7 @@
 4. **文档先发布、至少一次消费**：子任务先回报结果；允许重复读取同一记录，不允许重复产生副作用。
 5. **最大安全状态**：恢复时只恢复到证据支持的最高状态，无法证明的内容保持待核实。
 6. **控制面故障不污染业务状态**：派发、事件读取或台账写入故障不得伪装成代码 `Blocked` 或 Review Finding。
-7. **单实例幂等**：Hermes 单机单实例，无多 Coordinator 竞争；幂等由 `DispatchKey` 去重保证，不设协调租约锁。
+7. **单写者 Epoch 模型**：调度权由 `CoordinatorEpoch`（FencingToken）唯一持有；任一时刻仅一个当前所有者。幂等由 `DispatchKey` 去重 + Epoch 校验双重保证（cron 与交互会话竞争调度权时按 §12.3 移交协议换主）。
 8. **事件驱动 + cron 兜底**：事件（飞书长连接 / Codex 网关轮询）优先，cron 定时对账兜底；事件丢失不影响正确性。
 9. **执行机制显式配置**：每项派发记录 `ExpectedExecutionKind`、模型、沙箱；执行载体不可被未经授权替代。
 
@@ -172,6 +172,7 @@ LastEventFingerprint, BlockerType, RecoveryConfidence, NextAction
 
 - 派发幂等键：`DispatchKey = IterationID + TaskID + Stage + TargetIdentity`。同一 `DispatchKey` 已存在有效实例时禁止再次派发。
 - 消费幂等键：`RecordID + SignalRevision`。重复读取同一记录只更新读取元数据，不重复创建 Review、返工或集成任务。
+- **RecordID 全局唯一**（V3.0）：`RecordID` 必须使用不可复用的 ULID/UUID 生成，禁止手工序号复用；生成前须跨 Tasks 与 Signals 全域查重。冲突处置：冻结冲突记录、生成新 ID、保留新旧映射审计。派发前置门禁对 RecordID 唯一性实行 fail-closed 校验。
 - 事件指纹 `Fingerprint` 至少覆盖事件类型、任务、Invocation、目标 SHA/候选和规范化结果。
 
 ### 6.3 因果关系
@@ -204,15 +205,24 @@ Hermes → 执行载体：
 - 派发创建调用失败时登记 `ControlPlaneError`，不得登记业务 `Blocked`，不得改用其他执行机制兜底（除非项目负责人批准 `ApprovedEquivalent`）。
 - **载体不可用升级阈值**：同一执行载体（按 `ExecutionRef` 识别）连续派发/读取失败达到 **3 次**仍不可用，Hermes 不得继续空转重试，须升级并告警项目负责人（Richy）；仅当 Richy 批准 `ApprovedEquivalent` 时才可换等效载体，否则保持 `Provisioning`/`NeedsAttention`/`PendingVerification` 并等待 Richy 介入。
 
-### 7.3 沙箱分级与 git 授权
+### 7.3 沙箱分级与 git 授权（V3.0：统一 danger-full-access + 代码不可变约束）
 
-| 任务类型 | sandbox | 说明 |
+| 角色 | sandbox | 代码不可变约束 |
 |---|---|---|
-| 只读调研 / 代码审核 | read-only | Reviewer、只读调查 |
-| 写文档 / 写证据 | workspace-write | 不触碰 `.git` |
-| **需要 git 提交**（开发 / 集成（含合并）/ 文档设计） | danger-full-access | `.git` 在 workspace-write 下为 protected path |
+| Implementer / Integrator / Doc·Design Reviewer | danger-full-access | 按任务范围修改并提交 |
+| Coding / System / Final-Merge Reviewer | danger-full-access | **代码不可变**：仅可构建、运行测试与只读检查；不得修改业务源码、不得 commit 候选、不得 merge |
+| Validator | danger-full-access | 同 Reviewer；验证产物（日志/证据）可写 |
 
-需要 `git add/commit/merge/push` 的角色（Implementer、Integrator、Doc/Design Reviewer——后者需提交设计/工作包/上下文文档）使用 `danger-full-access`。Reviewer、Validator 为只读沙箱。Hermes 不代执行 git；worktree 创建由 Implementer 自办（Hermes 只派发 TaskID/base 分支/worktree 目录），审核由 Reviewer 只读进入，清理由 Integrator 统一执行（详见《Hermes流程与边界决议》C5/D2/D3b）。
+V2.5 的只读沙箱实测无法编译/运行测试，Reviewer 出不了可信结论，故 V3.0 起**所有 Codex
+派发统一使用 `danger-full-access`**。权限放大以「代码不可变约束」对冲：
+
+- Review 必须在**隔离的、以精确候选 commit 为基线的 detached 验证工作区**执行，
+  保护开发者原 worktree 的未提交内容与 Review 独立性；
+- 审查开始时核验候选 HEAD/tree；审查结束时再次核验 HEAD 未变化且工作区无受跟踪
+  业务源码 diff——一旦改动，本次 Review 结论无效；
+- 发现问题一律以 Finding 形式返回原开发载体返工，Reviewer 不得自行修改代码形成通过结论。
+
+Hermes 不代执行 git；worktree 创建由 Implementer 自办（Hermes 只派发 TaskID/base 分支/worktree 目录），清理由 Integrator 统一执行（详见《Hermes流程与边界决议》C5/D2/D3b）。
 
 ## 8. 状态生产与消费协议
 
@@ -242,7 +252,14 @@ Hermes 读台账
 
 跨任务读取失败时保留 `PendingConsumption`，记录控制面错误并通知；下一轮仍只处理该待消费记录，不得退化为扫描所有执行载体，也不得把读取失败改写成业务 `Blocked`。同一待消费记录连续读取失败达到 **3 次**仍无法处理时，按 §7.2 载体不可用升级阈值告警 Richy。
 
-若 final 缺少结构化协议头但内容可能有效，应先要求同一执行载体补发"仅协议头/缺失字段"，不得直接否定结果或机械创建新任务。执行载体不可用时保留原始内容并进入 `PendingVerification`。
+**执行故障判定与消费禁令（V3.0，取代本节先前"仅要求补发"的表述）**：
+`completed` 但 final 缺少结构化协议头时，立即标记 `ExecutionFailure / PendingVerification`，
+不得推进业务状态、不得作为 Review 结论消费。允许同一执行载体补发"仅协议头/缺失字段"
+**至多一次**；补发仍缺失或载体不可用时保留原始内容进入 `PendingVerification` 并上报项目负责人。
+
+**最大自动尝试次数（防无限循环）**：每次派发必须记录 `MaxAutomaticAttempts`（默认 3、不得超过 3，
+含首次），计数按 `TaskID + Stage + TargetIdentity` 持久化于运行台账——替换执行实例或调度权
+移交均不得重置。达上限后任务转 `NeedsAttention` 并升级项目负责人人工处置，禁止自动无限重派。
 
 ## 9. 证据归属与冲突处理
 
@@ -343,9 +360,58 @@ ControlPlaneErrors
 
 ### 12.2 并发与并行
 
-- Hermes 单机单实例，无多 Coordinator 竞争，**不设协调租约锁**；重复副作用由 `DispatchKey` 幂等去重阻断。
+- 调度权由 `CoordinatorEpoch` 唯一持有（见 §12.3）；非当前 Epoch 的任何派发、消费、台账副作用写入一律拒绝并记录。
 - 允许多任务并行；存在冲突（共享文件/同一 worktree）的任务不设为并行；实施中真产生冲突，找项目负责人协调（《Hermes流程与边界决议》C2）。
 - 一个任务同一阶段只保留一个有效执行实例，除非已拆成互不冲突的子任务。
+
+### 12.3 调度权移交协议（cron ↔ 交互会话）
+
+调度权在「协调 cron」与「交互会话」两类 driver 之间移交时，必须走本协议；禁止双方同时派发（双驱动）。
+
+**状态真源字段**（持久化于运行台账顶层 `CoordinatorEpoch` 对象）：
+
+| 字段 | 说明 |
+|---|---|
+| `Epoch` | 单调递增整数（FencingToken），每次换主 +1 |
+| `Owner` | 当前所有者身份（`cron:<job_id>` / `interactive:<session_id>`） |
+| `StateRevisionAtTakeover` | 接管时的台账 StateRevision 快照 |
+| `LostOwnerTimeout` | 失联判定阈值：固定默认 2 个调度周期；项目可配置正整数阈值，派发前由门禁校验存在且为正整数 |
+
+**正常移交（双向确认）**：
+
+1. 新 driver 发起接管请求（TransferID 生成）；
+2. 原 driver 停止派发、输出尾部 Signal 清单与 StateRevision；
+3. 新 driver 执行一次**原子条件更新**：仅当台账中当前 Epoch 与 StateRevision 仍匹配预期值时，新 Epoch 才生效；条件不满足即接管失败，重试或上报；
+4. 双方确认回执入台账；新 driver 接管后先做全量审计。
+
+**失联恢复**：
+
+1. 旧 owner 超过 `LostOwnerTimeout` 无心跳/无 tick → 进入恢复模式；
+2. 恢复模式下的接管必须经项目负责人（Richy）明确授权，禁止自动自愈；
+3. 授权后按原子条件更新换主；旧 Epoch 的全部在途执行冻结待人工裁定。
+
+**Fencing 执行规则**：
+
+- 所有派发与消费动作必须携带当前 Epoch 并校验匹配，不匹配即拒绝；
+- 尝试计数、暂停状态、待消费记录随调度状态真源继承——换主不清零；
+- 正常移交需双确认回执；旧实例失联时以超时 + Richy 授权替代其回执。
+
+### 12.4 载体策略与变更控制
+
+载体选择规则（原口述规则 R1-R5 及后续修订）的**唯一真源是「载体策略制品」**（版本化数据文件，
+含 PolicyVersion 与 PolicyArtifactDigest），不再以规范文本枚举具体载体分配。
+
+**双层变更通道**：
+
+| 变更类型 | 示例 | 通道 |
+|---|---|---|
+| 契约/schema 变更 | 改字段结构、授权模型、fail-closed 语义、验收逻辑 | 规范变更审核（05 章） |
+| 实例内容变更 | 载体暂不可用、优先级调整、额度变化 | 受控运行时变更：Richy 宣布 → 更新制品（version+1）→ 台账写 `PolicyChange` Signal（记授权人/Digest/生效范围）→ 门禁自动采用新版 |
+
+**派发强制门禁**：每次派发前必须通过派发前置门禁实现校验（fail-closed），检查项至少包括：
+意图字段完整、RecordID 全局唯一（§6.2）、载体可用且匹配策略制品、单线程约束、
+调度暂停闸、依赖满足、候选 SHA origin 可达；每次派发的台账记录附 PolicyVersion 与
+PolicyArtifactDigest。门禁 BLOCKED 即停止并上报项目负责人，禁止绕过。
 
 ## 13. 恢复协议（三级）
 
@@ -456,3 +522,5 @@ Canary 任一场景失败时进入 `CanaryFailed` 状态，并按下述路径闭
 | V2.5（待审核） | 2026-08-20 | Hermes | 补流程缺口7条：§3.2增 ContextGenerationPending；§6.1增 CI/集成验证回写 + 候选冻结 human-gated 事件；§7.2/§8载体不可用连续3次升级 Richy；§11.1停滞检测（含 IntegrationVerified 超时升级）；§13.1恢复升级阈值（热→冷→灾难，热3次）；§14.1 CanaryFailed 状态+处置路径+连续3次告警 Richy |
 | V2.5 定稿 | 2026-08-20 | WorkBuddy | 评审通过，标记为 V2.5 正式基线 |
 | V2.5 勘误 | 2026-08-21 | WorkBuddy | 修正「拒登记」→「拒绝登记」；§13 恢复协议小节重号改正（13.1/13.2/13.3）；§11 标题统一为「cron 对账」 |
+
+| V3.0-draft | 2026-08-24 | Hermes | V3.0 修订（提案 3.0 分支 V3.0-proposal.md v5）：①§2.7/§12 并发模型由「单机单实例不设锁」改为 CoordinatorEpoch/FencingToken + 原子条件换主 + 失联超时恢复（LostOwnerTimeout 默认 2 调度周期）+ 调度权移交协议（TransferID 双确认）；②新增 §12.4 载体策略与变更控制（载体策略制品唯一真源，契约/schema 变更走规范审核、实例内容变更走受控运行时变更；派发强制门禁 fail-closed）；③§6.2 RecordID 全局唯一（ULID/UUID，冲突冻结+映射审计）；④§8 执行故障升格：缺结构化头=ExecutionFailure/PendingVerification 禁止消费，补发≤1 次；MaxAutomaticAttempts≤3 持久化计数防无限重派；⑤§7.3 所有 Codex 派发统一 danger-full-access + Reviewer「代码不可变」约束（隔离 detached 验证工作区+前后 HEAD/tree 对账） |

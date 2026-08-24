@@ -201,17 +201,22 @@ DispatchKey = IterationID + TaskID + Stage + TargetIdentity
 
 ## 7. 派发与身份绑定
 
-### 7.1 派发 API
+### 7.1 派发适配器契约（V3.0：抽象契约，实现细节归实例登记）
 
-Hermes → 执行载体：
+调度器通过**派发适配器**与执行载体交互。可用载体由「载体策略制品」当前版本决定（§12.4），
+本规范不枚举具体载体，也不规定任何端点、参数或供应商配置。
 
-| 载体 | 派发方式 | 同步性 |
-|---|---|---|
-| WorkBuddy | 飞书 post 消息 @WB | 异步（单向投递） |
-| Codex | `POST /v1/threads`，body `{prompt, cwd, model, modelProvider, sandbox, approval}` | 可同步 / 异步 |
-| Human | 由 Hermes 通过 TG/飞书通知，人工作业 | 异步 |
+每个派发适配器必须满足的契约：
 
-`modelProvider`：`openai`（原生）/ `opencodex`（CodexSplit 第三方）。
+| 契约项 | 要求 |
+|---|---|
+| 派发 | 接受结构化派发意图并提交给目标载体 |
+| 身份绑定 | 返回可追踪的执行身份（ExecutionRef），供后续定向读取 |
+| 同步/异步结果 | 支持同步返回或异步完成信号；异步时最终必须产生可消费的完成事件 |
+| 失败语义 | 不可用/失败必须显式上报（ControlPlaneError），不得静默丢弃 |
+
+> 具体端点、请求参数、供应商与通道配置属部署事实，登记于**实例能力登记**
+> （非规范性受控记录），随部署演进随时更新，不进入规范正文。
 
 ### 7.2 ExecutionRef 统一身份
 
